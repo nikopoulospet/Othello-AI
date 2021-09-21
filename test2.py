@@ -1,23 +1,25 @@
+from Board import Board, PieceColor
 from Game import Game
 import os.path
 
+#NOTE: Blue is first place
 
 def main():
     gameOver = False
     gameboard = Game('first','second')
-    myPlace = 'second'
-    theirPlace = 'first'
+    myColor = PieceColor.ORANGE
+    theirColor = PieceColor.BLUE
     while(not gameOver):
 
         #if game is over break
         if(os.path.isfile('end_game.txt')):
-            print('GG')
+            print('GG EZ') #TODO remove for improved runtime
             gameOver = True
             continue
 
         #if not my turn break
         if(not os.path.isfile(__file__ + '.go')):
-            print('passing')
+            print('passing') #TODO remove for improved runtime
             #maybe add move scanning here to save time?
             #or start caculating possable furture moves
             continue
@@ -34,17 +36,20 @@ def main():
         # check to see if you are making the first move
         # aka no move before this one
         if line == "":
-            myPlace = 'first'
-            theirPlace = 'second'
+            print("Let me go first") #TODO remove for improved runtime
+            theirColor = PieceColor.ORANGE
+            myColor = PieceColor.BLUE
         else: # if there is a move that exists from the oponet do it
             # Tokenize move
             tokens = line.split()
             col = tokens[1]
             row = tokens[2]
-            gameboard.board.set_piece(int(row), col, gameboard.get_color(theirPlace))
+            # update internal board
+            gameboard.board.set_piece(int(row), col, theirColor)
 
-        # update internal board
-
+        print(gameboard.board) #TODO remove for improved runtime
+        # Find all legal moves
+        legalMoves = getLegalmoves(gameboard.board, myColor)
         # play move 
         row = '' #1-8
         col = '' #A-H
@@ -52,10 +57,23 @@ def main():
         # move making logic
 
         #update model
-        gameboard.board.set_piece(int(row), col, gameboard.get_color(myPlace))
-        
+        gameboard.board.set_piece(int(row), col, myColor)
+
         #send move
         file = open('move_file', 'w')
         file.write(__file__ + " " + col + " " + row)
         file.close()
-main()
+
+def getLegalmoves(Board: Board, nextPiece: PieceColor) -> list(int):
+    """
+    Takes in a game board and the player who is about to move then returns a list of all legal moves
+    :param Board: current board
+    :param nextPiece: the color of the peice that is about to move
+    :return: list of the index of all legal moves
+    """
+    legalMoves = list()
+    # lul
+    return legalMoves
+    
+
+main() #run code
