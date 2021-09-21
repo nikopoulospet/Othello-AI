@@ -48,14 +48,19 @@ def main():
             gameboard.board.set_piece(int(row), col, theirColor)
 
         print(gameboard.board) #TODO remove for improved runtime
+
         # Find all legal moves
         legalMoves = getLegalmoves(gameboard.board, myColor)
-        # play move 
-        row = '' #1-8
-        col = '' #A-H
 
         # move making logic
+        bestMove:int = -1
+        for move in legalMoves:
+            #TODO Write
+            pass
 
+        # convert index to move
+        row, col = getCordsFromIndex(bestMove)
+       
         #update model
         gameboard.board.set_piece(int(row), col, myColor)
 
@@ -64,7 +69,7 @@ def main():
         file.write(__file__ + " " + col + " " + row)
         file.close()
 
-def getLegalmoves(Board: Board, nextPiece: PieceColor) -> list(int):
+def getLegalmoves(Board: Board, nextPiece: PieceColor):
     """
     Takes in a game board and the player who is about to move then returns a list of all legal moves
     :param Board: current board
@@ -72,8 +77,18 @@ def getLegalmoves(Board: Board, nextPiece: PieceColor) -> list(int):
     :return: list of the index of all legal moves
     """
     legalMoves = list()
-    # lul
+    # TODO: Write
     return legalMoves
     
+def getCordsFromIndex(move:int):
+    """
+    Takes in the index of a move 0-63 and returns the cordanits 
+    :param move: index of the move to be converted
+    :return: row and colume
+    """
+    row:int = -1 #1-8
+    col:str = '' #A-H
+    # TODO: Write
+    return row, col
 
 main() #run code
