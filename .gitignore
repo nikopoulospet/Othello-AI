@@ -1,3 +1,7 @@
+# files that are created by Regeree.py
+*.go
+move_file
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
