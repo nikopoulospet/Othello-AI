@@ -8,6 +8,7 @@ import numpy as np
 
 BOARD_SIZE = 8
 
+
 def main():
     gameOver = False
     gameboard = Game('first', 'second')
@@ -80,10 +81,10 @@ def getLegalmoves(Board: Board, nextPiece: PieceColor):
     # iterate through board, if selected piece, then propogate out
     # use a set because duplicate checking is O(1)
     legalMoves = set()
-    interestSpots = [i for i,v in list(Board.board) if v == nextPiece]
+    interestSpots = [i for i, v in Board.board if v == nextPiece.name]
     for piece in interestSpots:
         for direction in Direction:
-            #choose a search dir and compute a step for each iteration, iterate first and stop if we reach an edge
+            # choose a search dir and compute a step for each iteration, iterate first and stop if we reach an edge
             step = direction.value[0] + (direction.value[1]*BOARD_SIZE)
             searchIndex = piece
             readyForMove = False
@@ -101,10 +102,9 @@ def getLegalmoves(Board: Board, nextPiece: PieceColor):
                     # seen enemy piece, next step could be valid move
                     readyForMove = True
                 if(onBoardEdge(searchIndex)):
-                    #if a piece is on the edge we know there is no more spaces to search
-                    break; 
+                    # if a piece is on the edge we know there is no more spaces to search
+                    break
     return list(legalMoves)
-
 
 
 def onBoardEdge(searchIndex: int):
@@ -119,6 +119,7 @@ def onBoardEdge(searchIndex: int):
     rgt = searchIndex+1 % BOARD_SIZE == 0
     return top or bot or lft or rgt
 
+
 def getCoordsFromIndex(move: int):
     """
     Takes in the index of a move 0-63 and returns the cordanits 
@@ -126,18 +127,32 @@ def getCoordsFromIndex(move: int):
     :return: row and column
     """
     row: int = (move // BOARD_SIZE) + 1  # 1-8
-    col: str = chr(65+(move % BOARD_SIZE)) # A-H
+    col: str = chr(65+(move % BOARD_SIZE))  # A-H
     return row, col
 
-def miniMax(Moves: list, currPlayer: PieceColor):
+
+def miniMax(gameboard: Board):
     """
     Implementation of the minimax algorithm with alpha beta pruning
+    :param myMoves are the next possible legal moves for our player
+    :param opponentMoves are the next possible legal moves for our opponent with know heuristic
+    :param currPlayer is the current player based on the color
+    :return the optimal move
     """
+
+    # 1 is our piece, -1 is opponent piece, 0 is empty spot
+
+    # get legal moves after
+    # set_piece to do each move
+    # get legal moves again for opponent moves, set_piece for all of those and run heuristic to get board state value
+    # return that heuristic value then run minimax aglo on that
+
     index = -1
+
     return getCoordsFromIndex(index)
 
 
-def heuristic(Board: Board, move: int):
+def heuristic(currBoard: Board):
     """
     Implementation of the heuristic function
     """
