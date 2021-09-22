@@ -37,6 +37,8 @@ class npBoard:
     def switchToFirstPlayer(self):
         self.board * -1
 
+    def getBoard(self):
+        return self.board 
     def set_piece(self, row:int, _col:str, color:int):
         """
         Set piece at the given coordinates to the given color (1 = us, -1 = them)
@@ -187,8 +189,7 @@ def getLegalmoves(gameBoard: npBoard, nextPiece: int):
     # use a set because duplicate checking is O(1)
     legalMoves = set()
     interestSpots = list()
-    boardList = gameBoard.board
-    interestSpots = [i for i,v in gameBoard.board if v == nextPiece]
+    interestSpots = [i for i,v in gameBoard.getBoard() if v == nextPiece]
     print(interestSpots)
     for piece in interestSpots:
         for direction in Direction:
