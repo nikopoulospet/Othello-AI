@@ -239,7 +239,7 @@ def getCoordsFromIndex(move: int):
     return row, col
 
 
-def miniMax(gameboard: Board):
+def miniMax(gameboard: npBoard):
     """
     Implementation of the minimax algorithm with alpha beta pruning
     :param myMoves are the next possible legal moves for our player
@@ -247,13 +247,19 @@ def miniMax(gameboard: Board):
     :param currPlayer is the current player based on the color
     :return the optimal move
     """
+    # 1 is our piece, -1 is opponent piece, 0 is empty spot
 
-# 1 is our piece, -1 is opponent piece, 0 is empty spot
+    # get legal moves after
+    legalMoves = getLegalmoves(gameboard, 1)
+    # row: int, _col: str, color: int)
 
-# get legal moves after
-# set_piece to do each move
-# get legal moves again for opponent moves, set_piece for all of those and run heuristic to get board state value
-# return that heuristic value then run minimax aglo on that
+    # set_piece to do each move
+    for i in legalMoves:
+        coords = getCoordsFromIndex(legalMoves[i])
+        npBoard.set_piece(row=coords[0], col=coords[1], color=1)
+        search(npBoard, 1)
+    # get legal moves again for opponent moves, set_piece for all of those and run heuristic to get board state value
+    # return that heuristic value then run minimax aglo on that
 
     index = -1
 
@@ -262,18 +268,29 @@ def miniMax(gameboard: Board):
 
 def heuristic(currBoard: npBoard):
     """
-    Implementation of the heuristic function
+    :param currBoard is the current board state
+    :return the heuristic score of the board currently from our POV
     """
     score = -1
+    for i in npBoard:
+        score += npBoard[i]
     return score
 
 
 def search(gameBoard: npBoard, currPlayer: int):
     """
-    Implementation of the search algorithm upon tree of moves
+    Implementation of the search algorithm upon tree of moves\
+    :param currBoard is the current board state
+    :param currPlayer is the current player, 1 is us, -1 is opponent
+    :return the legal moves heuristics of a board state
     """
-    print(getLegalmoves(gameBoard, currPlayer))
-    return -1
+    moveHeuristics = np.array()
+    legalMoves = getLegalmoves(npBoard, currPlayer)
+    for i in legalMoves:
+        coords = getCoordsFromIndex(legalMoves[i])
+        npBoard.set_piece(row=coords[0], col=coords[1], color=currPlayer)
+        moveHeuristics.append(heuristic(npBoard))
+    return moveHeuristics
 
 
 def out_of_bounds(row: int, col: int) -> bool:
