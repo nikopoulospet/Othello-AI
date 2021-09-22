@@ -7,6 +7,7 @@ import numpy as np
 
 BOARD_SIZE = 8
 
+
 class Direction(Enum):
     """
     Enum of possible directions on an Othello board
@@ -19,6 +20,7 @@ class Direction(Enum):
     DOWN_RIGHT = (1, 1)
     LEFT = (0, -1)
     RIGHT = (0, 1)
+
 
 class npBoard:
     """
@@ -38,7 +40,8 @@ class npBoard:
         self.board * -1
 
     def getBoard(self):
-        return self.board 
+        return self.board
+ 
     def set_piece(self, row:int, _col:str, color:int):
         """
         Set piece at the given coordinates to the given color (1 = us, -1 = them)
@@ -47,7 +50,7 @@ class npBoard:
         :param color: PieceColor
         :return: False if this was an illegal move for some reason, otherwise True
         """
-        #convert from letter to value
+        # convert from letter to value
         col = ord(_col) - ord('A')
 
         # Make change to board
@@ -116,6 +119,7 @@ class npBoard:
         :return: PieceColor at (row, col) on board
         """
         return self.board[row * 8 + col]
+
 
 def main():
     gameOver = False
@@ -193,7 +197,7 @@ def getLegalmoves(gameBoard: npBoard, nextPiece: int):
     print(interestSpots)
     for piece in interestSpots:
         for direction in Direction:
-            #choose a search dir and compute a step for each iteration, iterate first and stop if we reach an edge
+            # choose a search dir and compute a step for each iteration, iterate first and stop if we reach an edge
             step = direction.value[0] + (direction.value[1]*BOARD_SIZE)
             searchIndex = piece
             readyForMove = False
@@ -211,10 +215,9 @@ def getLegalmoves(gameBoard: npBoard, nextPiece: int):
                     # seen enemy piece, next step could be valid move
                     readyForMove = True
                 if(onBoardEdge(searchIndex)):
-                    #if a piece is on the edge we know there is no more spaces to search
-                    break; 
+                    # if a piece is on the edge we know there is no more spaces to search
+                    break
     return list(legalMoves)
-
 
 
 def onBoardEdge(searchIndex: int):
@@ -229,6 +232,7 @@ def onBoardEdge(searchIndex: int):
     rgt = searchIndex+1 % BOARD_SIZE == 0
     return top or bot or lft or rgt
 
+
 def getCoordsFromIndex(move: int):
     """
     Takes in the index of a move 0-63 and returns the cordanits 
@@ -236,18 +240,32 @@ def getCoordsFromIndex(move: int):
     :return: row and column
     """
     row: int = (move // BOARD_SIZE) + 1  # 1-8
-    col: str = chr(65+(move % BOARD_SIZE)) # A-H
+    col: str = chr(65+(move % BOARD_SIZE))  # A-H
     return row, col
 
-def miniMax(Moves: list, currPlayer: int):
+
+def miniMax(gameboard: Board):
     """
     Implementation of the minimax algorithm with alpha beta pruning
+    :param myMoves are the next possible legal moves for our player
+    :param opponentMoves are the next possible legal moves for our opponent with know heuristic
+    :param currPlayer is the current player based on the color
+    :return the optimal move
     """
+
+# 1 is our piece, -1 is opponent piece, 0 is empty spot
+
+# get legal moves after
+# set_piece to do each move
+# get legal moves again for opponent moves, set_piece for all of those and run heuristic to get board state value
+# return that heuristic value then run minimax aglo on that
+
     index = -1
+
     return getCoordsFromIndex(index)
 
 
-def heuristic(Board: npBoard, move: int):
+def heuristic(currBoard: npBoard):
     """
     Implementation of the heuristic function
     """
@@ -262,16 +280,18 @@ def search(gameBoard: npBoard, currPlayer: int):
     print(getLegalmoves(gameBoard, currPlayer))
     return -1
 
+
 def out_of_bounds(row: int, col: int) -> bool:
-        """
-        Check if coordinates are out of bounds
-        :param row: Integer row coordinate
-        :param col: Integer column coordinate
-        :return: True if out of bounds, false if on board
-        """
-        if (row < 0) or (row > 7) or (col < 0) or (col > 7):
-            return True
-        else:
-            return False
+    """
+    Check if coordinates are out of bounds
+    :param row: Integer row coordinate
+    :param col: Integer column coordinate
+    :return: True if out of bounds, false if on board
+    """
+    if (row < 0) or (row > 7) or (col < 0) or (col > 7):
+        return True
+    else:
+        return False
+
 
 main()  # run code
