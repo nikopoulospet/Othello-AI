@@ -39,14 +39,10 @@ class npBoard:
     def switchToFirstPlayer(self):
         self.board * -1
 
-<<<<<<< HEAD
-    def set_piece(self, row: int, _col: str, player: int):
-=======
     def getBoard(self):
         return self.board
- 
-    def set_piece(self, row:int, _col:str, color:int):
->>>>>>> 17d5ee6ad57522e9533c3806e3bc08ce08dd9fc1
+
+    def set_piece(self, row: int, _col: str, color: int):
         """
         Set piece at the given coordinates to the given color (1 = us, -1 = them)
         :param row: Row in the form 0-7
@@ -195,7 +191,7 @@ def getLegalmoves(gameBoard: npBoard, nextPiece: int):
     # use a set because duplicate checking is O(1)
     legalMoves = set()
     interestSpots = list()
-    interestSpots = [i for i,v in gameBoard.getBoard() if v == nextPiece]
+    interestSpots = [i for i, v in gameBoard.getBoard() if v == nextPiece]
     print(interestSpots)
     for piece in interestSpots:
         for direction in Direction:
@@ -279,23 +275,16 @@ def heuristic(currBoard: npBoard):
     :param currBoard is the current board state
     :return the heuristic score of the board currently from our POV
     """
-<<<<<<< HEAD
-    score = -1
-    for i in npBoard:
-        score += npBoard[i]
-    return score
-=======
-    spotWeights = np.array([2,1,1,1,1,1,1,2,
-                            1,1,1,1,1,1,1,1,
-                            1,1,1,1,1,1,1,1,
-                            1,1,1,1,1,1,1,1,
-                            1,1,1,1,1,1,1,1,
-                            1,1,1,1,1,1,1,1,
-                            1,1,1,1,1,1,1,1,
-                            2,1,1,1,1,1,1,2,])
-    
+    spotWeights = np.array([2, 1, 1, 1, 1, 1, 1, 2,
+                            1, 1, 1, 1, 1, 1, 1, 1,
+                            1, 1, 1, 1, 1, 1, 1, 1,
+                            1, 1, 1, 1, 1, 1, 1, 1,
+                            1, 1, 1, 1, 1, 1, 1, 1,
+                            1, 1, 1, 1, 1, 1, 1, 1,
+                            1, 1, 1, 1, 1, 1, 1, 1,
+                            2, 1, 1, 1, 1, 1, 1, 2, ])
+
     return np.sum(currBoard * spotWeights)
->>>>>>> 17d5ee6ad57522e9533c3806e3bc08ce08dd9fc1
 
 
 def search(gameboard: npBoard):
