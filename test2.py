@@ -16,7 +16,7 @@ def main():
     while(not gameOver):
 
         # if game is over break
-        if(os.path.isfile('end_game.txt')):
+        if(os.path.isfile('end_game')):
             print('GG EZ')  # TODO remove for improved runtime
             gameOver = True
             continue
@@ -56,10 +56,7 @@ def main():
         legalMoves = getLegalmoves(gameboard.board, myColor)
 
         # move making logic
-        bestMove: int = -1
-        for move in legalMoves:
-            # TODO Write
-            pass
+        bestMove = search(gameboard, myColor)
 
         # convert index to move
         row, col = getCoordsFromIndex(bestMove)
@@ -83,7 +80,7 @@ def getLegalmoves(Board: Board, nextPiece: PieceColor):
     # iterate through board, if selected piece, then propogate out
     # use a set because duplicate checking is O(1)
     legalMoves = set()
-    interestSpots = [i for i,v in enumerate(Board.board) if v == nextPiece]
+    interestSpots = [i for i,v in list(Board.board) if v == nextPiece]
     for piece in interestSpots:
         for direction in Direction:
             #choose a search dir and compute a step for each iteration, iterate first and stop if we reach an edge
@@ -99,7 +96,7 @@ def getLegalmoves(Board: Board, nextPiece: PieceColor):
                     break
                 elif(Board.board[searchIndex] == nextPiece):
                     # seen own piece, break propogation
-                    break;
+                    break
                 else:
                     # seen enemy piece, next step could be valid move
                     readyForMove = True
@@ -148,10 +145,11 @@ def heuristic(Board: Board, move: int):
     return score
 
 
-def search(Moves: list):
+def search(gameBoard: Board, currPlayer: PieceColor):
     """
     Implementation of the search algorithm upon tree of moves
     """
+    print(getLegalmoves(gameBoard, currPlayer))
     return -1
 
 
