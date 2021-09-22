@@ -14,7 +14,6 @@ def main():
     myColor = PieceColor.ORANGE
     theirColor = PieceColor.BLUE
     while(not gameOver):
-
         # if game is over break
         if(os.path.isfile('end_game.txt')):
             print('GG EZ')  # TODO remove for improved runtime
@@ -55,12 +54,16 @@ def main():
         # Find all legal moves
         legalMoves = getLegalmoves(gameboard.board, myColor)
 
+        print(legalMoves)
+
+        bestMove = random.choice(legalMoves) 
+        """
         # move making logic
         bestMove: int = -1
         for move in legalMoves:
             # TODO Write
             pass
-
+"""
         # convert index to move
         row, col = getCoordsFromIndex(bestMove)
 
