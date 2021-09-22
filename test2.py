@@ -50,24 +50,22 @@ class npBoard:
         :param color: PieceColor
         :return: False if this was an illegal move for some reason, otherwise True
         """
+        resultingBoard = np.array(self.board)
         # convert from letter to value
         col = ord(_col) - ord('A')
 
         # Make change to board
-        self.board[row * 8 + col] = color
+        resultingBoard[row * 8 + col] = color
 
         # Check for envelopment
-        envelop = self._get_enveloped_pieces(row, col, color)
+        envelop = self._get_enveloped_pieces(row, col, color, resultingBoard)
         for coords in envelop:
-            self.board[coords[0] * 8 + coords[1]] = color
+            resultingBoard[coords[0] * 8 + coords[1]] = color
 
         # Make sure we enveloped at least one piece, otherwise this was an invalid move
-        if len(envelop) == 0:
-            return False
-        else:
-            return True
+        return resultingBoard
 
-    def _get_enveloped_pieces(self, row: int, col: int, color: int):
+    def _get_enveloped_pieces(self, row: int, col: int, color: int, whatBoard):
         """
         Get all pieces that would be enveloped if a piece of the given color were placed at the given coordinates
         :param row: Row in the form 0-7
@@ -93,7 +91,7 @@ class npBoard:
                 col_curr += col_off
 
                 # Check if piece could be enveloped
-                color_curr = self._get_piece(row_curr, col_curr)
+                color_curr = self._get_piece(row_curr, col_curr, whatBoard)
                 if color_curr == 0:
                     break
                 elif color_curr == color:
@@ -111,14 +109,14 @@ class npBoard:
 
         return enveloped
 
-    def _get_piece(self, row: int, col: int) -> int:
+    def _get_piece(self, row: int, col: int, whatBoard) -> int:
         """
         Get piece at given coordinates on Othello board
         :param row: Row in the form 0-7
         :param col: Column in the form 0-7
         :return: PieceColor at (row, col) on board
         """
-        return self.board[row * 8 + col]
+        return whatBoard[row * 8 + col]
 
 
 def main():
@@ -244,7 +242,7 @@ def getCoordsFromIndex(move: int):
     return row, col
 
 
-def miniMax(gameboard: Board):
+def miniMax(gameboard: npBoard):
     """
     Implementation of the minimax algorithm with alpha beta pruning
     :param myMoves are the next possible legal moves for our player
@@ -269,8 +267,16 @@ def heuristic(currBoard: npBoard):
     """
     Implementation of the heuristic function
     """
-    score = -1
-    return score
+    spotWeights = np.array([2,1,1,1,1,1,1,2,
+                            1,1,1,1,1,1,1,1,
+                            1,1,1,1,1,1,1,1,
+                            1,1,1,1,1,1,1,1,
+                            1,1,1,1,1,1,1,1,
+                            1,1,1,1,1,1,1,1,
+                            1,1,1,1,1,1,1,1,
+                            2,1,1,1,1,1,1,2,])
+    
+    return np.sum(currBoard * spotWeights)
 
 
 def search(gameBoard: npBoard, currPlayer: int):
