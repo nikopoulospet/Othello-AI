@@ -39,7 +39,14 @@ class npBoard:
     def switchToFirstPlayer(self):
         self.board * -1
 
+<<<<<<< HEAD
     def set_piece(self, row: int, _col: str, player: int):
+=======
+    def getBoard(self):
+        return self.board
+ 
+    def set_piece(self, row:int, _col:str, color:int):
+>>>>>>> 17d5ee6ad57522e9533c3806e3bc08ce08dd9fc1
         """
         Set piece at the given coordinates to the given color (1 = us, -1 = them)
         :param row: Row in the form 0-7
@@ -47,24 +54,22 @@ class npBoard:
         :param color: PieceColor
         :return: False if this was an illegal move for some reason, otherwise True
         """
+        resultingBoard = np.array(self.board)
         # convert from letter to value
         col = ord(_col) - ord('A')
 
         # Make change to board
-        self.board[row * 8 + col] = color
+        resultingBoard[row * 8 + col] = color
 
         # Check for envelopment
-        envelop = self._get_enveloped_pieces(row, col, color)
+        envelop = self._get_enveloped_pieces(row, col, color, resultingBoard)
         for coords in envelop:
-            self.board[coords[0] * 8 + coords[1]] = color
+            resultingBoard[coords[0] * 8 + coords[1]] = color
 
         # Make sure we enveloped at least one piece, otherwise this was an invalid move
-        if len(envelop) == 0:
-            return False
-        else:
-            return True
+        return resultingBoard
 
-    def _get_enveloped_pieces(self, row: int, col: int, color: int):
+    def _get_enveloped_pieces(self, row: int, col: int, color: int, whatBoard):
         """
         Get all pieces that would be enveloped if a piece of the given color were placed at the given coordinates
         :param row: Row in the form 0-7
@@ -90,7 +95,7 @@ class npBoard:
                 col_curr += col_off
 
                 # Check if piece could be enveloped
-                color_curr = self._get_piece(row_curr, col_curr)
+                color_curr = self._get_piece(row_curr, col_curr, whatBoard)
                 if color_curr == 0:
                     break
                 elif color_curr == color:
@@ -108,14 +113,14 @@ class npBoard:
 
         return enveloped
 
-    def _get_piece(self, row: int, col: int) -> int:
+    def _get_piece(self, row: int, col: int, whatBoard) -> int:
         """
         Get piece at given coordinates on Othello board
         :param row: Row in the form 0-7
         :param col: Column in the form 0-7
         :return: PieceColor at (row, col) on board
         """
-        return self.board[row * 8 + col]
+        return whatBoard[row * 8 + col]
 
 
 def main():
@@ -189,7 +194,9 @@ def getLegalmoves(gameBoard: npBoard, nextPiece: int):
     # iterate through board, if selected piece, then propogate out
     # use a set because duplicate checking is O(1)
     legalMoves = set()
-    interestSpots = [i for i, v in Board.board if v == nextPiece.name]
+    interestSpots = list()
+    interestSpots = [i for i,v in gameBoard.getBoard() if v == nextPiece]
+    print(interestSpots)
     for piece in interestSpots:
         for direction in Direction:
             # choose a search dir and compute a step for each iteration, iterate first and stop if we reach an edge
@@ -272,10 +279,23 @@ def heuristic(currBoard: npBoard):
     :param currBoard is the current board state
     :return the heuristic score of the board currently from our POV
     """
+<<<<<<< HEAD
     score = -1
     for i in npBoard:
         score += npBoard[i]
     return score
+=======
+    spotWeights = np.array([2,1,1,1,1,1,1,2,
+                            1,1,1,1,1,1,1,1,
+                            1,1,1,1,1,1,1,1,
+                            1,1,1,1,1,1,1,1,
+                            1,1,1,1,1,1,1,1,
+                            1,1,1,1,1,1,1,1,
+                            1,1,1,1,1,1,1,1,
+                            2,1,1,1,1,1,1,2,])
+    
+    return np.sum(currBoard * spotWeights)
+>>>>>>> 17d5ee6ad57522e9533c3806e3bc08ce08dd9fc1
 
 
 def search(gameboard: npBoard):
