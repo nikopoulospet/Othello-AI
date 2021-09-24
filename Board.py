@@ -124,7 +124,7 @@ class Board:
             # List of pieces that could potentially be enveloped based on information known thus far
             potential_flip = []
             envelop = False
-            while not out_of_bounds(row_curr, col_curr):
+            while not out_of_bounds(row_curr + row_off, col_curr + col_off):
                 # Offset coordinates in direction
                 row_curr += row_off
                 col_curr += col_off
