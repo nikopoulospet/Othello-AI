@@ -233,7 +233,7 @@ class npBoard:
         generates string from index to write to move file
         """
         if(index == -1):
-            return " P P"
+            return " P 1"
         row, col = npBoard.getCoordsFromIndex(index)
         return " " + col + " " + str(row)
 

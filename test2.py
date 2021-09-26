@@ -168,20 +168,36 @@ def depthLimitedSearch(gameboardArray, pruningValue, recussionDepth):
                 bestMove = i
         return bestMove, bestHeuristic
     else:
-        for theirMoves in legalMoves:
-            # one of their next moves
-            thierTempBoard = npBoard.set_piece_index(theirMoves, -1, gameboardArray)
-            # find all our resposes
-            nextLegalMoves = npBoard.getLegalmoves(1, thierTempBoard)
-            for ourMove in nextLegalMoves:
-                # simulate our move
-                theirNextTempBoard = npBoard.set_piece_index(ourMove, 1, thierTempBoard)
-                bestMoveHere, passedHeuristic = depthLimitedSearch(theirNextTempBoard, pruningValue, recussionDepth + 1)
-                if bestMoveHere == -1:
-                    return -1, pruningValue
-                if passedHeuristic > bestHeuristic:
-                    bestHeuristic = passedHeuristic
-                    bestMove = ourMove
-        return bestMove, bestHeuristic
+        val1, val2 = minLayer(gameboardArray, pruningValue, recussionDepth)
+        return val1, val2
+
+def minLayer(gameboardArray, pruningValue, recussionDepth):
+    legalMoves = npBoard.getLegalmoves(-1, gameboardArray)
+    bestMove = 9999999
+    bestHeuristic = 9999999
+    for theirMoves in legalMoves:
+        # one of their next moves
+        thierTempBoard = npBoard.set_piece_index(theirMoves, -1, gameboardArray)
+        # find all our resposes
+        _bestMove, bestHeuristic = maxLayer(thierTempBoard, pruningValue, recussionDepth)
+        if bestHeuristic < pruningValue:
+            return -1, pruningValue
+        if bestHeuristic < bestHeuristic:
+            bestHeuristic = bestHeuristic
+            bestMove = theirMoves
+    return bestMove, bestHeuristic
+
+def maxLayer(gameboardArray, pruningValue, recussionDepth):
+    bestMove = -9999999
+    bestHeuristic = -9999999
+    nextLegalMoves = npBoard.getLegalmoves(1, gameboardArray)
+    for ourMove in nextLegalMoves:
+        # simulate our move
+        tempBoard = npBoard.set_piece_index(ourMove, 1, gameboardArray)
+        bestMoveHere, passedHeuristic = depthLimitedSearch(tempBoard, pruningValue, recussionDepth + 1)
+        if passedHeuristic > bestHeuristic:
+            bestHeuristic = passedHeuristic
+            bestMove = ourMove
+    return bestMove, bestHeuristic
 
 main()  # run code

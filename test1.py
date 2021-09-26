@@ -50,8 +50,9 @@ def main():
             col = tokens[1]
             row = tokens[2]
             # update internal board
-            gameboard.board = npBoard.set_piece_coords(
-                int(row), col, -1, gameboard.board)
+            if col != "P":
+                gameboard.board = npBoard.set_piece_coords(
+                    int(row), col, -1, gameboard.board)
 
         # print(gameboard.to_str([]))  # TODO remove for improved runtime
         # Find all legal moves
