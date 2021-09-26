@@ -102,13 +102,14 @@ class npBoard:
         # Check if coordinates are out of bounds
         if npBoard._out_of_bounds(row, col):
             print("board coords are out of bounds")
-            print("Trying to go out of bounds: ", row, col)
+            print("Trying to go out of bounds: ",
+                  npBoard._get_row_col_from_coord(row, col))
             return copyBoard
 
         # Check if space is occupied
         if copyBoard[row * 8 + col] != 0:
             print("board coords are already occupied")
-            print("Trying to occupy: ", row, col)
+            print("Trying to occupy: ", npBoard._get_row_col_from_coord(row, col))
             return copyBoard
 
         # Make change to board

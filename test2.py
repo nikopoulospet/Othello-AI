@@ -64,7 +64,6 @@ def main():
 
         # send move
         file = open('move_file', 'w')
-        print(npBoard.writeCoords(bestMove))
         file.write("test2.py" + npBoard.writeCoords(bestMove))
         file.close()
 
@@ -94,7 +93,6 @@ def miniMax(gameboard: npBoard):
         if move[1] >= bestMove[1]:
             bestMove = move
     # return index of best value
-    # print (npBoard.writeCoords(bestMove))
     return bestMove[0]
 
 
