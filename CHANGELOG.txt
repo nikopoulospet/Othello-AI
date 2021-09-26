@@ -1,3 +1,6 @@
+v3 (25 September 2021):
+    * Fix handling of valid passes
+
 v2 (23 September 2021):
     * Fix out of bounds checking crash
 

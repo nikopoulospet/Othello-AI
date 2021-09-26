@@ -18,5 +18,4 @@ class TerminalColor(Enum):
     NRM = "\033[0m"
     BLUE = "\033[34m"
     YELLOW = "\033[33m"
-    NEW = "\033[36m"
     GREEN = "\033[32m"
