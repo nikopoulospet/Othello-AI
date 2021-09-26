@@ -45,7 +45,7 @@ def main():
             # Tokenize move
             tokens = line.split()
             player = tokens[0]
-            if(player == ".\\test2.py"):
+            if(player == "test1.py"):
                 continue
             col = tokens[1]
             row = tokens[2]
@@ -62,7 +62,7 @@ def main():
 
         # send move
         file = open('move_file', 'w')
-        file.write(".\\test1.py" + npBoard.writeCoords(bestMove))
+        file.write("test1.py" + npBoard.writeCoords(bestMove))
         file.close()
 
 
@@ -91,7 +91,7 @@ def miniMax(gameboard: npBoard):
         if move[1] >= bestMove[1]:
             bestMove = move
     # return index of best value
-    print (bestMove)
+    print(bestMove)
     return bestMove[0]
 
 
