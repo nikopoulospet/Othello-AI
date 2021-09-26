@@ -1,7 +1,7 @@
 from Board import PieceColor
 from enum import Enum
 import os.path
-
+import time
 from npBoard import npBoard
 import numpy as np
 # NOTE: Blue is first place
@@ -22,7 +22,7 @@ def main():
 
         # if not my turn break
         if(not os.path.isfile(__file__ + '.go')):
-            # print('passing')  # TODO remove for improved runtime
+            time.sleep(0.05)
             # maybe add move scanning here to save time?
             # or start caculating possable furture moves
             continue
@@ -56,12 +56,15 @@ def main():
         # print(gameboard.to_str([]))  # TODO remove for improved runtime
         # Find all legal moves
 
+        print("test 2 is making a move starting at this state, self is red")
+        print(npBoard.to_str(gameboard.board, []))
         # move making logic
         bestMove = miniMax(gameboard)
         gameboard.board = npBoard.set_piece_index(bestMove, 1, gameboard.board)
 
         # send move
         file = open('move_file', 'w')
+        print(npBoard.writeCoords(bestMove))
         file.write("test2.py" + npBoard.writeCoords(bestMove))
         file.close()
 
