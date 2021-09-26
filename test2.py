@@ -87,17 +87,19 @@ def miniMax(gameboard: npBoard):
         return -1
 
     # set_piece to do each move
-    tree = list()
+    # NOTE: best move is in the form (index of move, huristic of move)
+    bestMove = (-9999999, -9999999)
     for i in legalMoves:
         tempBoard = npBoard.set_piece_index(i, 1, gameboard.board)
-        best, bestHeuristic = search(tempBoard)
-        tree.append((i, bestHeuristic))
+        best, bestHeuristic = search(tempBoard, bestMove[1])
+        if(best != -1): # if the branch wasnt pruned
+            lastMove = (i, bestHeuristic)
+            if lastMove[1] >= bestMove[1]:
+                bestMove = lastMove
+        else: # testing only delete this else
+            print("Pruned Branch")
     # get legal moves again for opponent moves, set_piece for all of those and run heuristic to get board state value
     # return that heuristic value then run minimax aglo on that
-    bestMove = (-9999999, -9999999)
-    for move in tree:
-        if move[1] >= bestMove[1]:
-            bestMove = move
     # return index of best value
     return bestMove[0]
 
@@ -119,20 +121,23 @@ def heuristic(currBoard: npBoard):
     return np.sum(currBoard * spotWeights)
 
 
-def search(gameboardArray):
+def search(gameboardArray, pruningValue):
     """
     Implementation of the search algorithm upon tree of moves
     :param currBoard is the current board state
-    :return the legal moves heuristics of a board state
+    :return the legal moves heuristics and index of the move or -1 for the index if the branch was prunded
     """
     bestMove = 9999999
     bestHeuristic = 9999999
     legalMoves = npBoard.getLegalmoves(-1, gameboardArray)
-    print(npBoard.to_str(gameboardArray, legalMoves))
+    # print(npBoard.to_str(gameboardArray, legalMoves))
     for i in legalMoves:
         tempBoard = npBoard.set_piece_index(
             index=i, color=-1, board=gameboardArray)
         tempHeuristic = heuristic(tempBoard)
+        #alpha beta pruning
+        if tempHeuristic < pruningValue:
+            return -1, pruningValue
         if bestHeuristic > tempHeuristic:
             bestHeuristic = tempHeuristic
             bestMove = i

@@ -127,7 +127,7 @@ def search(gameboardArray):
     bestMove = 9999999
     bestHeuristic = 9999999
     legalMoves = npBoard.getLegalmoves(-1, gameboardArray)
-    print(npBoard.to_str(gameboardArray, legalMoves))
+    # print(npBoard.to_str(gameboardArray, legalMoves))
     for i in legalMoves:
         tempBoard = npBoard.set_piece_index(
             index=i, color=-1, board=gameboardArray)
