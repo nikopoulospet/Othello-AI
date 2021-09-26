@@ -77,6 +77,8 @@ class npBoard:
         :param color: Piececolor
         :return: False if illegal move, true otherwise
         """
+        if(index == -1):
+            return board
         row, col = npBoard._get_row_col_from_index(index)
         return npBoard._set_piece(row, col, color, board)
 
@@ -88,6 +90,8 @@ class npBoard:
         :param color: PieceColor
         :return: False if this was an illegal move for some reason, otherwise True
         """
+        if(_col == "P"):
+            return board
         row, col = npBoard._get_row_col_from_coord(_row, _col)
         return npBoard._set_piece(row, col, color, board)
 
@@ -228,6 +232,8 @@ class npBoard:
         """
         generates string from index to write to move file
         """
+        if(index == -1):
+            return " P 3"
         row, col = npBoard.getCoordsFromIndex(index)
         return " " + col + " " + str(row)
 
@@ -250,7 +256,7 @@ class npBoard:
                     if not temp == "0":
                         temp = TerminalColor.YELLOW.value + "X" + TerminalColor.NRM.value
                     else:
-                        temp = TerminalColor.NEW.value + "X" + TerminalColor.NRM.value
+                        temp = TerminalColor.GREEN.value + "X" + TerminalColor.NRM.value
                 out += temp
                 out += "  "
             out += "\n"

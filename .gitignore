@@ -1,6 +1,7 @@
 # files that are created by Regeree.py
 *.go
 move_file
+end_game
 
 #vscode files
 .vscode/
