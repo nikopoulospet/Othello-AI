@@ -1,1 +1,1 @@
-test2.py WINS! test1.py LOSES! Invalid move!
+.\test2.py WINS! .\test1.py LOSES! The winning player has more discs on the board!
