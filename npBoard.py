@@ -1,9 +1,12 @@
 import random
 import numpy as np
 from enum import Enum
+
+from numpy.lib.function_base import copy
 from Util import TerminalColor
 
 BOARD_SIZE = 8
+
 
 class Direction(Enum):
     """
@@ -18,19 +21,21 @@ class Direction(Enum):
     LEFT = (0, -1)
     RIGHT = (0, 1)
 
+
 class npBoard:
     """
     faster and more useable othello 
     """
+
     def __init__(self):
         self.board = np.zeros(64)
-        self.board = self.set_piece_coords(5, 'D', -1)
-        self.board = self.set_piece_coords(5, 'E', 1)
-        self.board = self.set_piece_coords(4, 'D', 1)
-        self.board = self.set_piece_coords(4, 'E', -1)
+        self.board = npBoard.set_piece_coords(5, 'D', -1, self.board)
+        self.board = npBoard.set_piece_coords(5, 'E', 1, self.board)
+        self.board = npBoard.set_piece_coords(4, 'D', 1, self.board)
+        self.board = npBoard.set_piece_coords(4, 'E', -1, self.board)
 
     def switchToFirstPlayer(self):
-        self.board *-1
+        self.board * -1
 
     def getBoard(self):
         return self.board
@@ -41,31 +46,31 @@ class npBoard:
         :param move: index of the move to be converted
         :return: row and column
         """
-        row: int = -1*((move // BOARD_SIZE) - 8) # 1-8
+        row: int = -1*((move // BOARD_SIZE) - 8)  # 1-8
         col: str = chr(65+(move % BOARD_SIZE))  # A-H
         return row, col
 
-    def _get_row_col_from_coord(_row: int, _col:str):
+    def _get_row_col_from_coord(_row: int, _col: str):
         """
         gets the row col representation from a coordnate input (1-8,A-H)
         :param move: index of move in question
         :return: row,column in 0-7,0-7 format
         """
-        row = -1*(_row - 8) # because row in this form is 1-8
+        row = -1*(_row - 8)  # because row in this form is 1-8
         col = ord(_col) - ord('A')
-        return row,col
- 
+        return row, col
+
     def _get_row_col_from_index(index: int):
         """
         gets the local coordinate representation of an index (0-7, 0-7)
         :param move: index of move in question
         :return: row,column in 0-7,0-7 format
         """
-        row: int = (index // BOARD_SIZE) # 0-7 range
-        col: int = index % BOARD_SIZE # 0-7 range
-        return row,col
+        row: int = (index // BOARD_SIZE)  # 0-7 range
+        col: int = index % BOARD_SIZE  # 0-7 range
+        return row, col
 
-    def set_piece_index(self, index: int, color: int, board=np.array([])):
+    def set_piece_index(index: int, color: int, board=np.array([])):
         """
         Wrapper method for set piece so that you dont need to explictly convert indexes to coords
         :param index_move: index of the move to make
@@ -73,9 +78,9 @@ class npBoard:
         :return: False if illegal move, true otherwise
         """
         row, col = npBoard._get_row_col_from_index(index)
-        return self._set_piece(row,col,color,board)
+        return npBoard._set_piece(row, col, color, board)
 
-    def set_piece_coords(self, _row: int, _col: str, color: int, board=np.array([])):
+    def set_piece_coords(_row: int, _col: str, color: int, board=np.array([])):
         """
         Set piece at the given coordinates to the given color (1 = us, -1 = them), takes in coords from the (int, str) format
         :param row: Row in the form 1-8
@@ -83,39 +88,39 @@ class npBoard:
         :param color: PieceColor
         :return: False if this was an illegal move for some reason, otherwise True
         """
-        row, col = npBoard._get_row_col_from_coord(_row,_col)
-        return self._set_piece(row,col,color,board)
+        row, col = npBoard._get_row_col_from_coord(_row, _col)
+        return npBoard._set_piece(row, col, color, board)
 
-    def _set_piece(self, row: int, col: str, color: int, board):
+    def _set_piece(row: int, col: str, color: int, board):
         """
         Set piece at the given coordinates to the given color (1 = us, -1 = them), generic form of set piece that abstracts the index args
         :param row: Row in the form 0-7
         :param col: Column in the form 0-7
         :param color: PieceColor
         """
-        if not np.any(board):
-            board = np.array(self.board)
+        copyBoard = np.copy(board)
         # Check if coordinates are out of bounds
         if npBoard._out_of_bounds(row, col):
             print("board coords are out of bounds")
-            return board
+            print(row, col)
+            return copyBoard
 
         # Check if space is occupied
-        if board[row * 8 + col] != 0:
+        if copyBoard[row * 8 + col] != 0:
             print("board coords are already occupied")
-            return board
+            return copyBoard
 
         # Make change to board
-        board[row * 8 + col] = color
+        copyBoard[row * 8 + col] = color
 
         # Check for envelopment
-        envelop = self._get_enveloped_pieces(row, col, color, board)
+        envelop = npBoard._get_enveloped_pieces(row, col, color, copyBoard)
         for coords in envelop:
-            board[coords[0] * 8 + coords[1]] = color
+            copyBoard[coords[0] * 8 + coords[1]] = color
 
-        return board
+        return copyBoard
 
-    def _get_enveloped_pieces(self, row: int, col: int, color: int, board):
+    def _get_enveloped_pieces(row: int, col: int, color: int, board):
         """
         Get all pieces that would be enveloped if a piece of the given color were placed at the given coordinates
         :param row: Row in the form 0-7
@@ -178,7 +183,8 @@ class npBoard:
         :return: a list of positions in local 0-7, 0-7 coordinates
         """
         interestSpots = list()
-        interestSpots = [i[0] for i, v in np.ndenumerate(board) if v == nextPiece]
+        interestSpots = [i[0]
+                         for i, v in np.ndenumerate(board) if v == nextPiece]
         return [npBoard._get_row_col_from_index(i) for i in interestSpots]
 
     def getLegalmoves(nextPiece: int, board):
@@ -223,7 +229,7 @@ class npBoard:
         row, col = npBoard.getCoordsFromIndex(index)
         return " " + col + " " + str(row)
 
-    def to_str(self, pot_moves: list()) -> str:
+    def to_str(board, pot_moves: list()) -> str:
         """
         Convert this board to a pretty-printed string!
         :return: Pretty-printed string displaying board
@@ -232,12 +238,12 @@ class npBoard:
         for i in range(8):
             out += str(8 - i) + "  "
             for j in range(8):
-                color = self.board[i * 8 + j]
+                color = board[i * 8 + j]
                 temp = "0"
                 if color == 1:
-                    temp = TerminalColor.BLUE.value + "B" + TerminalColor.NRM.value
-                elif color == -1:
                     temp = TerminalColor.RED.value + "R" + TerminalColor.NRM.value
+                elif color == -1:
+                    temp = TerminalColor.BLUE.value + "B" + TerminalColor.NRM.value
                 if (i*8 + j) in pot_moves:
                     if not temp == "0":
                         temp = TerminalColor.YELLOW.value + "X" + TerminalColor.NRM.value
@@ -260,10 +266,11 @@ if __name__ == "__main__":
         print("++++ player {} moves ++++".format(p))
         if moves == []:
             print("player {} has no moves left".format(p))
-            break 
+            break
         chosen = random.choice(moves)
-        print("Player {} has chosen this move {}".format(p,chosen))
-        print("all possible moves: {}".format([npBoard.getCoordsFromIndex(i) for i in moves]))
-        print(gameboard.to_str(moves))
+        print("Player {} has chosen this move {}".format(p, chosen))
+        print("all possible moves: {}".format(
+            [npBoard.getCoordsFromIndex(i) for i in moves]))
+        print(npBoard.to_str(gameboard.board, moves))
         print(" ")
-        gameboard.board = gameboard.set_piece_index(chosen,p)
+        gameboard.board = npBoard.set_piece_index(chosen, p, gameboard.board)
