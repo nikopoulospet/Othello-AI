@@ -22,17 +22,15 @@ class npBoard:
     """
     faster and more useable othello 
     """
-
-    board = np.zeros(64)
-
     def __init__(self):
-        self.set_piece_coords(5, 'D', -1)
-        self.set_piece_coords(5, 'E', 1)
-        self.set_piece_coords(4, 'D', 1)
-        self.set_piece_coords(4, 'E', -1)
+        self.board = np.zeros(64)
+        self.board = self.set_piece_coords(5, 'D', -1)
+        self.board = self.set_piece_coords(5, 'E', 1)
+        self.board = self.set_piece_coords(4, 'D', 1)
+        self.board = self.set_piece_coords(4, 'E', -1)
 
     def switchToFirstPlayer(self):
-        self.board * -1
+        self.board *-1
 
     def getBoard(self):
         return self.board
@@ -47,7 +45,17 @@ class npBoard:
         col: str = chr(65+(move % BOARD_SIZE))  # A-H
         return row, col
 
-    def _get_local_coords_from_index(index: int):
+    def _get_row_col_from_coord(_row: int, _col:str):
+        """
+        gets the row col representation from a coordnate input (1-8,A-H)
+        :param move: index of move in question
+        :return: row,column in 0-7,0-7 format
+        """
+        row = -1*(_row - 8) # because row in this form is 1-8
+        col = ord(_col) - ord('A')
+        return row,col
+ 
+    def _get_row_col_from_index(index: int):
         """
         gets the local coordinate representation of an index (0-7, 0-7)
         :param move: index of move in question
@@ -57,17 +65,17 @@ class npBoard:
         col: int = index % BOARD_SIZE # 0-7 range
         return row,col
 
-    def set_piece_index(self, index: int, color: int):
+    def set_piece_index(self, index: int, color: int, board=np.array([])):
         """
         Wrapper method for set piece so that you dont need to explictly convert indexes to coords
         :param index_move: index of the move to make
         :param color: Piececolor
         :return: False if illegal move, true otherwise
         """
-        row, col = npBoard._get_local_coords_from_index(index)
-        return self._set_piece(row,col,color)
+        row, col = npBoard._get_row_col_from_index(index)
+        return self._set_piece(row,col,color,board)
 
-    def set_piece_coords(self, _row: int, _col: str, color: int):
+    def set_piece_coords(self, _row: int, _col: str, color: int, board=np.array([])):
         """
         Set piece at the given coordinates to the given color (1 = us, -1 = them), takes in coords from the (int, str) format
         :param row: Row in the form 1-8
@@ -75,41 +83,39 @@ class npBoard:
         :param color: PieceColor
         :return: False if this was an illegal move for some reason, otherwise True
         """
-        row = _row - 1 # because row in this form is 1-8
-        col = ord(_col) - ord('A')
-        return self._set_piece(row,col,color)
+        row, col = npBoard._get_row_col_from_coord(_row,_col)
+        return self._set_piece(row,col,color,board)
 
-    def _set_piece(self, row: int, col: str, color: int):
+    def _set_piece(self, row: int, col: str, color: int, board):
         """
         Set piece at the given coordinates to the given color (1 = us, -1 = them), generic form of set piece that abstracts the index args
         :param row: Row in the form 0-7
         :param col: Column in the form 0-7
         :param color: PieceColor
-        :return: False if this was an illegal move for some reason, otherwise True
         """
+        if not np.any(board):
+            board = np.array(self.board)
         # Check if coordinates are out of bounds
         if npBoard._out_of_bounds(row, col):
-            return False
+            print("board coords are out of bounds")
+            return board
 
         # Check if space is occupied
-        if self.board[row * 8 + col] != 0:
-            return False
+        if board[row * 8 + col] != 0:
+            print("board coords are already occupied")
+            return board
 
         # Make change to board
-        self.board[row * 8 + col] = color
+        board[row * 8 + col] = color
 
         # Check for envelopment
-        envelop = self._get_enveloped_pieces(row, col, color)
+        envelop = self._get_enveloped_pieces(row, col, color, board)
         for coords in envelop:
-            self.board[coords[0] * 8 + coords[1]] = color
+            board[coords[0] * 8 + coords[1]] = color
 
-        # Make sure we enveloped at least one piece, otherwise this was an invalid move
-        if len(envelop) == 0:
-            return False
-        else:
-            return True
+        return board
 
-    def _get_enveloped_pieces(self, row: int, col: int, color: int):
+    def _get_enveloped_pieces(self, row: int, col: int, color: int, board):
         """
         Get all pieces that would be enveloped if a piece of the given color were placed at the given coordinates
         :param row: Row in the form 0-7
@@ -125,14 +131,13 @@ class npBoard:
         for (row_off, col_off) in [d.value for d in Direction]:
             row_curr = row + row_off
             col_curr = col + col_off
-
             # List of pieces that could potentially be enveloped based on information known thus far
             potential_flip = []
             envelop = False
             while not npBoard._out_of_bounds(row_curr, col_curr):
 
                 # Check if piece could be enveloped
-                color_curr = self._get_piece(row_curr, col_curr)
+                color_curr = board[row_curr*8 + col_curr]
                 if color_curr == 0:
                     break
                 elif color_curr == color:
@@ -154,15 +159,6 @@ class npBoard:
 
         return enveloped
 
-    def _get_piece(self, row: int, col: int) -> int:
-        """
-        Get piece at given coordinates on Othello board
-        :param row: Row in the form 0-7
-        :param col: Column in the form 0-7
-        :return: PieceColor at (row, col) on board
-        """
-        return self.board[row * 8 + col]
-
     def _out_of_bounds(row: int, col: int) -> bool:
         """
         Check if coordinates are out of bounds, MUST BE (0-7,0-7)
@@ -175,17 +171,17 @@ class npBoard:
         else:
             return False
 
-    def _get_player_positions(self, nextPiece: int):
+    def getPlayerPositions(nextPiece: int, board):
         """
         Compiles a list of all player positions in local 0-7, 0-7 coordinates
         :param nextPiece: int of player in question
         :return: a list of positions in local 0-7, 0-7 coordinates
         """
         interestSpots = list()
-        interestSpots = [i[0] for i, v in np.ndenumerate(self.getBoard()) if v == nextPiece]
-        return [npBoard._get_local_coords_from_index(i) for i in interestSpots]
+        interestSpots = [i[0] for i, v in np.ndenumerate(board) if v == nextPiece]
+        return [npBoard._get_row_col_from_index(i) for i in interestSpots]
 
-    def getLegalmoves(self, nextPiece: int):
+    def getLegalmoves(nextPiece: int, board):
         """
         Takes in a game board and the player who is about to move then returns a list of all legal moves
         :param Board: current board
@@ -195,7 +191,7 @@ class npBoard:
         # iterate through board, if selected piece, then propogate out
         # use a set because duplicate checking is O(1)
         legalMoves = set()
-        interestSpots = self._get_player_positions(nextPiece)
+        interestSpots = npBoard.getPlayerPositions(nextPiece, board)
 
         for piece in interestSpots:
             for step_row, step_col in [d.value for d in Direction]:
@@ -204,12 +200,12 @@ class npBoard:
                 col_ptr = piece[1] + step_col
                 readyForMove = False
                 while not npBoard._out_of_bounds(row_ptr, col_ptr):
-                    if(self.board[row_ptr * 8 + col_ptr] == 0):
+                    if(board[row_ptr * 8 + col_ptr] == 0):
                         # seen empty space, either break or add move
                         if(readyForMove):
                             legalMoves.add(row_ptr * 8 + col_ptr)
                         break
-                    elif(self.board[row_ptr * 8 + col_ptr] == nextPiece):
+                    elif(board[row_ptr * 8 + col_ptr] == nextPiece):
                         # seen own piece, break propogation
                         break
                     else:
@@ -220,7 +216,14 @@ class npBoard:
 
         return list(legalMoves)
 
-    def to_str(self, pot_moves: list(), player: int) -> str:
+    def writeCoords(index: int):
+        """
+        generates string from index to write to move file
+        """
+        row, col = npBoard.getCoordsFromIndex(index)
+        return " " + col + " " + str(row)
+
+    def to_str(self, pot_moves: list()) -> str:
         """
         Convert this board to a pretty-printed string!
         :return: Pretty-printed string displaying board
@@ -229,7 +232,7 @@ class npBoard:
         for i in range(8):
             out += str(8 - i) + "  "
             for j in range(8):
-                color = self._get_piece(i, j)
+                color = self.board[i * 8 + j]
                 temp = "0"
                 if color == 1:
                     temp = TerminalColor.BLUE.value + "B" + TerminalColor.NRM.value
@@ -251,7 +254,7 @@ if __name__ == "__main__":
     print("GAMEBOARD TESTS")
     gameboard = npBoard()
     p = 1
-    for i in range(100):
+    for i in range(5):
         p *= -1
         moves = gameboard.getLegalmoves(p)
         print("++++ player {} moves ++++".format(p))
@@ -259,8 +262,8 @@ if __name__ == "__main__":
             print("player {} has no moves left".format(p))
             break 
         chosen = random.choice(moves)
-        print("Player {} has chosen this move {}".format(p,chosen ))
+        print("Player {} has chosen this move {}".format(p,chosen))
         print("all possible moves: {}".format([npBoard.getCoordsFromIndex(i) for i in moves]))
-        print(gameboard.to_str(moves, p))
+        print(gameboard.to_str(moves))
         print(" ")
-        gameboard.set_piece_index(chosen,p)
+        gameboard.board = gameboard.set_piece_index(chosen,p)

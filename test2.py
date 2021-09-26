@@ -49,24 +49,20 @@ def main():
             col = tokens[1]
             row = tokens[2]
             # update internal board
-            gameboard.set_piece(int(row), col, -1)
+            gameboard.set_piece_coords(int(row), col, -1)
 
-        print(gameboard)  # TODO remove for improved runtime
+        print(gameboard.to_str([]))  # TODO remove for improved runtime
         # Find all legal moves
 
         # move making logic
         bestMove = search(gameboard)
-
-        # convert index to move
-        row, col = getCoordsFromIndex(bestMove)
-
-        # update model
-        gameboard.board.set_piece(int(row), col, myColor)
+        gameboard.board = gameboard.set_piece_index(bestMove, 1)
 
         # send move
         file = open('move_file', 'w')
-        file.write(__file__ + " " + col + " " + row)
+        file.write(__file__ + npBoard.writeCoords(bestMove))
         file.close()
+
 
 def miniMax(gameboard: npBoard):
     """
@@ -119,12 +115,15 @@ def search(gameboard: npBoard):
     :param currBoard is the current board state
     :return the legal moves heuristics of a board state
     """
-    moveHeuristics = np.array([])
-    legalMoves = getLegalmoves(npBoard, -1)
+    bestMove = -1
+    bestHeuristic = -1
+    legalMoves = npBoard.getLegalmoves(-1, gameboard.getBoard())
     for i in legalMoves:
-        coords = getCoordsFromIndex(i)
-        gameboard.set_piece(row=coords[0], col=coords[1], color=-1)
-        moveHeuristics.append(heuristic(gameboard))
-    return np.min(moveHeuristics)
+        tempBoard = gameboard.set_piece_index(index=i, color=-1)
+        tempHeuristic = heuristic(tempBoard)
+        if bestHeuristic > tempHeuristic:
+            bestHeuristic = tempHeuristic
+            bestMove = i
+    return bestMove
 
 main()  # run code
