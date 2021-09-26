@@ -254,9 +254,9 @@ if __name__ == "__main__":
     print("GAMEBOARD TESTS")
     gameboard = npBoard()
     p = 1
-    for i in range(5):
+    for i in range(100):
         p *= -1
-        moves = gameboard.getLegalmoves(p)
+        moves = npBoard.getLegalmoves(p, gameboard.board)
         print("++++ player {} moves ++++".format(p))
         if moves == []:
             print("player {} has no moves left".format(p))
