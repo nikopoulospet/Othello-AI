@@ -29,10 +29,10 @@ class npBoard:
 
     def __init__(self):
         self.board = np.zeros(64)
-        self.board = npBoard.set_piece_coords(5, 'D', -1, self.board)
-        self.board = npBoard.set_piece_coords(5, 'E', 1, self.board)
-        self.board = npBoard.set_piece_coords(4, 'D', 1, self.board)
-        self.board = npBoard.set_piece_coords(4, 'E', -1, self.board)
+        self.board = npBoard.set_piece_coords(5, 'D', 1, self.board)
+        self.board = npBoard.set_piece_coords(5, 'E', -1, self.board)
+        self.board = npBoard.set_piece_coords(4, 'D', -1, self.board)
+        self.board = npBoard.set_piece_coords(4, 'E', 1, self.board)
 
     def switchToFirstPlayer(self):
         self.board * -1

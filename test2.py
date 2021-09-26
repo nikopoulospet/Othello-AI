@@ -1,7 +1,6 @@
 from Board import PieceColor
 from enum import Enum
 import os.path
-import sys
 
 from npBoard import npBoard
 import numpy as np
@@ -13,8 +12,6 @@ BOARD_SIZE = 8
 def main():
     gameOver = False
     gameboard = npBoard()
-    myColor = PieceColor.ORANGE
-    theirColor = PieceColor.BLUE
     while(not gameOver):
 
         # if game is over break
@@ -43,12 +40,13 @@ def main():
         # aka no move before this one
         if line == "":
             print("Let me go first")  # TODO remove for improved runtime
-            theirColor = PieceColor.ORANGE
-            myColor = PieceColor.BLUE
             gameboard.switchToFirstPlayer()
         else:  # if there is a move that exists from the oponet do it
             # Tokenize move
             tokens = line.split()
+            player = tokens[0]
+            if(player == ".\\test2.py"):
+                continue
             col = tokens[1]
             row = tokens[2]
             # update internal board
@@ -64,7 +62,7 @@ def main():
 
         # send move
         file = open('move_file', 'w')
-        file.write(__file__ + npBoard.writeCoords(bestMove))
+        file.write(".\\test2.py" + npBoard.writeCoords(bestMove))
         file.close()
 
 
@@ -93,6 +91,7 @@ def miniMax(gameboard: npBoard):
         if move[1] >= bestMove[1]:
             bestMove = move
     # return index of best value
+    print (bestMove)
     return bestMove[0]
 
 
