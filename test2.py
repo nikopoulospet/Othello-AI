@@ -13,8 +13,6 @@ BOARD_SIZE = 8
 def main():
     gameOver = False
     gameboard = npBoard()
-    myColor = PieceColor.ORANGE
-    theirColor = PieceColor.BLUE
     while(not gameOver):
 
         # if game is over break
@@ -43,8 +41,6 @@ def main():
         # aka no move before this one
         if line == "":
             print("Let me go first")  # TODO remove for improved runtime
-            theirColor = PieceColor.ORANGE
-            myColor = PieceColor.BLUE
             gameboard.switchToFirstPlayer()
         else:  # if there is a move that exists from the oponet do it
             # Tokenize move
