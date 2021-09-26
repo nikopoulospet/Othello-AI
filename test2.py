@@ -7,7 +7,7 @@ import numpy as np
 # NOTE: Blue is first place
 
 BOARD_SIZE = 8
-
+DEPTH_SEARCH = 2
 
 def main():
     gameOver = False
@@ -50,8 +50,9 @@ def main():
             col = tokens[1]
             row = tokens[2]
             # update internal board
-            gameboard.board = npBoard.set_piece_coords(
-                int(row), col, -1, gameboard.board)
+            if col != "P":
+                gameboard.board = npBoard.set_piece_coords(
+                    int(row), col, -1, gameboard.board)
 
         # print(gameboard.to_str([]))  # TODO remove for improved runtime
         # Find all legal moves
@@ -90,8 +91,9 @@ def miniMax(gameboard: npBoard):
     # NOTE: best move is in the form (index of move, huristic of move)
     bestMove = (-9999999, -9999999)
     for i in legalMoves:
+        #make our move then send it
         tempBoard = npBoard.set_piece_index(i, 1, gameboard.board)
-        best, bestHeuristic = search(tempBoard, bestMove[1])
+        best, bestHeuristic = depthLimitedSearch(tempBoard, bestMove[1], 1)
         if(best != -1): # if the branch wasnt pruned
             lastMove = (i, bestHeuristic)
             if lastMove[1] >= bestMove[1]:
@@ -143,5 +145,43 @@ def search(gameboardArray, pruningValue):
             bestMove = i
     return bestMove, bestHeuristic
 
+def depthLimitedSearch(gameboardArray, pruningValue, recussionDepth):
+    """
+    Implementation of the search algorithm upon tree of moves
+    :param currBoard is the current board state
+    :return the legal moves heuristics and index of the move or -1 for the index if the branch was prunded
+    """
+
+    bestMove = 9999999
+    bestHeuristic = 9999999
+    legalMoves = npBoard.getLegalmoves(-1, gameboardArray)
+    if recussionDepth == DEPTH_SEARCH:
+        for i in legalMoves:
+            tempBoard = npBoard.set_piece_index(
+                index=i, color=-1, board=gameboardArray)
+            tempHeuristic = heuristic(tempBoard)
+            #alpha beta pruning
+            if tempHeuristic < pruningValue:
+                return -1, pruningValue
+            if tempHeuristic < bestHeuristic:
+                bestHeuristic = tempHeuristic
+                bestMove = i
+        return bestMove, bestHeuristic
+    else:
+        for theirMoves in legalMoves:
+            # one of their next moves
+            thierTempBoard = npBoard.set_piece_index(theirMoves, -1, gameboardArray)
+            # find all our resposes
+            nextLegalMoves = npBoard.getLegalmoves(1, thierTempBoard)
+            for ourMove in nextLegalMoves:
+                # simulate our move
+                theirNextTempBoard = npBoard.set_piece_index(ourMove, 1, thierTempBoard)
+                bestMoveHere, passedHeuristic = depthLimitedSearch(theirNextTempBoard, pruningValue, recussionDepth + 1)
+                if bestMoveHere == -1:
+                    return -1, pruningValue
+                if passedHeuristic > bestHeuristic:
+                    bestHeuristic = passedHeuristic
+                    bestMove = ourMove
+        return bestMove, bestHeuristic
 
 main()  # run code
