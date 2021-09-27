@@ -7,7 +7,7 @@ import numpy as np
 # NOTE: Blue is first place
 
 BOARD_SIZE = 8
-DEPTH_SEARCH = 2
+DEPTH_SEARCH = 3
 time_limit = 1000
 
 
@@ -96,7 +96,7 @@ def miniMax(gameboard: npBoard):
     for i in legalMoves:
         # make our move then send it
         tempBoard = npBoard.set_piece_index(i, 1, gameboard.board)
-        best, bestHeuristic = alphaBetaSearch(gameboard, 1)
+        best, bestHeuristic = alphaBetaSearch(gameboard, 0)
         if(best != -1):  # if the branch wasnt pruned
             lastMove = (i, bestHeuristic)
             if lastMove[1] >= bestMove[1]:
