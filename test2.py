@@ -236,7 +236,7 @@ def maxLayer(gameboardArray, pruningValue, recussionDepth):
 
 def findMax(gameboardArray, alpha, beta, currDepth):
     if currDepth == DEPTH_SEARCH:
-        return -9999999
+        return heuristic(gameboardArray)
     currMax = np.NINF
     legalMoves = npBoard.getLegalmoves(1, gameboardArray)
     for move in legalMoves:
@@ -250,7 +250,7 @@ def findMax(gameboardArray, alpha, beta, currDepth):
 
 def findMin(gameboardArray, alpha, beta, currDepth):
     if currDepth == DEPTH_SEARCH:
-        return 9999999
+        return heuristic(gameboardArray)
     currMin = np.inf
     legalMoves = npBoard.getLegalmoves(-1, gameboardArray)
     for move in legalMoves:
