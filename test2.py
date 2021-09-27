@@ -119,6 +119,12 @@ def heuristic(currBoard: npBoard):
     # B2, B7, G2, and G7 worth -25
     ourLegalMoves = npBoard.getLegalmoves(1, currBoard)
     theirLegalMoves = npBoard.getLegalmoves(-1, currBoard)
+    moveWeight = ourLegalMoves - theirLegalMoves
+
+    ourDiscs = len(npBoard.getPlayerPositions(1, currBoard))
+    theirDiscs = len(npBoard.getPlayerPositions(-1, currBoard))
+    discWeight = ourDiscs - theirDiscs
+
     spotWeights = np.array([100, 1, 1, 1, 1, 1, 1, 100,
                             1, -25, 1, 1, 1, 1, -25, 1,
                             1, 1, 1, 1, 1, 1, 1, 1,
@@ -127,8 +133,8 @@ def heuristic(currBoard: npBoard):
                             1, 1, 1, 1, 1, 1, 1, 1,
                             1, -25, 1, 1, 1, 1, -25, 1,
                             100, 1, 1, 1, 1, 1, 1, 100, ])
-    value = (np.sum(currBoard*spotWeights) + (ourLegalMoves-theirLegalMoves))
-    return value
+    spotWeight = np.sum(currBoard*spotWeights)
+    return moveWeight + discWeight + spotWeight
 
 
 def search(gameboardArray, pruningValue):
