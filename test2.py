@@ -111,129 +111,36 @@ def miniMax(gameboard: npBoard):
     return bestMove[0]
 
 
-def heuristic(currBoard: npBoard):
+def evaluation(currBoard: npBoard):
     """
     :param currBoard is the current board state
     :return the heuristic score of the board currently from our POV
     """
-    spotWeights = np.array([2, 1, 1, 1, 1, 1, 1, 2,
-                            1, 1, 1, 1, 1, 1, 1, 1,
-                            1, 1, 1, 1, 1, 1, 1, 1,
-                            1, 1, 1, 1, 1, 1, 1, 1,
-                            1, 1, 1, 1, 1, 1, 1, 1,
-                            1, 1, 1, 1, 1, 1, 1, 1,
-                            1, 1, 1, 1, 1, 1, 1, 1,
-                            2, 1, 1, 1, 1, 1, 1, 2, ])
-
-    return np.sum(currBoard * spotWeights)
-
     # Legal moves worth 10
     # Corners worth 100
     # B2, B7, G2, and G7 worth -25
-    # ourLegalMoves = len(npBoard.getLegalmoves(1, currBoard))
-    # theirLegalMoves = len(npBoard.getLegalmoves(-1, currBoard))
-    # moveWeight = ourLegalMoves - theirLegalMoves
+    ourLegalMoves = len(npBoard.getLegalmoves(1, currBoard))
+    theirLegalMoves = len(npBoard.getLegalmoves(-1, currBoard))
+    moveWeight = ourLegalMoves - theirLegalMoves
 
-    # ourDiscs = npBoard.getPlayerPositions(1, currBoard)
-    # theirDiscs = npBoard.getPlayerPositions(-1, currBoard)
-    # discWeight = len(ourDiscs) - len(theirDiscs)
+    ourDiscs = npBoard.getPlayerPositions(1, currBoard)
+    theirDiscs = npBoard.getPlayerPositions(-1, currBoard)
+    discWeight = len(ourDiscs) - len(theirDiscs)
 
-    # spotWeights = np.array([100, 1, 1, 1, 1, 1, 1, 100,
-    #                         1, -50, 1, 1, 1, 1, -50, 1,
-    #                         1, 1, 1, 1, 1, 1, 1, 1,
-    #                         1, 1, 1, 1, 1, 1, 1, 1,
-    #                         1, 1, 1, 1, 1, 1, 1, 1,
-    #                         1, 1, 1, 1, 1, 1, 1, 1,
-    #                         1, -50, 1, 1, 1, 1, -50, 1,
-    #                         100, 1, 1, 1, 1, 1, 1, 100, ])
-    # spotWeight = np.sum(currBoard*spotWeights)
-    # return discWeight + spotWeight + moveWeight
-
-
-def search(gameboardArray, pruningValue):
-    """
-    Implementation of the search algorithm upon tree of moves
-    :param currBoard is the current board state
-    :return the legal moves heuristics and index of the move or -1 for the index if the branch was prunded
-    """
-    bestMove = 9999999
-    bestHeuristic = 9999999
-    legalMoves = npBoard.getLegalmoves(-1, gameboardArray)
-    # print(npBoard.to_str(gameboardArray, legalMoves))
-    for i in legalMoves:
-        tempBoard = npBoard.set_piece_index(
-            index=i, color=-1, board=gameboardArray)
-        tempHeuristic = heuristic(tempBoard)
-        # alpha beta pruning
-        if tempHeuristic < pruningValue:
-            return -1, pruningValue
-        if bestHeuristic > tempHeuristic:
-            bestHeuristic = tempHeuristic
-            bestMove = i
-    return bestMove, bestHeuristic
+    spotWeights = np.array([100, 1, 1, 1, 1, 1, 1, 100,
+                            1, -50, 1, 1, 1, 1, -50, 1,
+                            1, 1, 1, 1, 1, 1, 1, 1,
+                            1, 1, 1, 1, 1, 1, 1, 1,
+                            1, 1, 1, 1, 1, 1, 1, 1,
+                            1, 1, 1, 1, 1, 1, 1, 1,
+                            1, -50, 1, 1, 1, 1, -50, 1,
+                            100, 1, 1, 1, 1, 1, 1, 100, ])
+    spotWeight = np.sum(currBoard*spotWeights)
+    return discWeight + spotWeight + moveWeight
 
 
-def depthLimitedSearch(gameboardArray, pruningValue, depth):
-    """
-    Implementation of the search algorithm upon tree of moves
-    :param currBoard is the current board state
-    :return the legal moves heuristics and index of the move or -1 for the index if the branch was prunded
-    """
-    bestMove = 9999999
-    bestHeuristic = 9999999
-    legalMoves = npBoard.getLegalmoves(-1, gameboardArray)
-    if depth == DEPTH_SEARCH:
-        for i in legalMoves:
-            tempBoard = npBoard.set_piece_index(
-                index=i, color=-1, board=gameboardArray)
-            tempHeuristic = heuristic(tempBoard)
-            # alpha beta pruning
-            if tempHeuristic < pruningValue:
-                return -1, pruningValue
-            if tempHeuristic < bestHeuristic:
-                bestHeuristic = tempHeuristic
-                bestMove = i
-        return bestMove, bestHeuristic
-    else:
-        # TODO : rename to bestMove, bestHeuristic?
-        val1, val2 = minLayer(gameboardArray, pruningValue, depth)
-        return val1, val2
-
-
-def minLayer(gameboardArray, pruningValue, recussionDepth):
-    # oppenents legal moves
-    legalMoves = npBoard.getLegalmoves(-1, gameboardArray)
-    bestMove = 9999999
-    bestHeuristic = 9999999
-    for theirMove in legalMoves:
-        # simulate their move
-        theirTempBoard = npBoard.set_piece_index(
-            theirMove, -1, gameboardArray)
-        # find our responses to their move
-        bestMoveHere, bestHeuristicMax = maxLayer(
-            theirTempBoard, pruningValue, recussionDepth)
-        if bestHeuristicMax < pruningValue:
-            return -1, pruningValue
-        if bestHeuristicMax < bestHeuristic:
-            bestHeuristic = bestHeuristicMax
-            bestMove = bestMoveHere
-    return bestMove, bestHeuristic
-
-
-def maxLayer(gameboardArray, pruningValue, recussionDepth):
-    # our legal moves
-    nextLegalMoves = npBoard.getLegalmoves(1, gameboardArray)
-    bestMove = -9999999
-    bestHeuristic = -9999999
-    for ourMove in nextLegalMoves:
-        # simulate our move
-        tempBoard = npBoard.set_piece_index(ourMove, 1, gameboardArray)
-        bestMoveHere, passedHeuristic = depthLimitedSearch(
-            tempBoard, pruningValue, recussionDepth + 1)
-        if passedHeuristic > bestHeuristic:
-            bestHeuristic = passedHeuristic
-            bestMove = ourMove
-    return bestMove, bestHeuristic
+def heuristic(currBoard: npBoard):
+    return len(npBoard.getLegalmoves(-1, currBoard))
 
 
 def findMax(gameboardArray, alpha, beta, currDepth):
