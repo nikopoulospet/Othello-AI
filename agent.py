@@ -21,7 +21,7 @@ def main():
         wentFirst = False
         # if game is over break
         if(os.path.isfile('end_game')):
-            print("Heuristic" + str(evaluation(gameboard.board)))
+            print("Heuristic " + str(evaluation(gameboard.board)))
             print('GG EZ')  # TODO remove for improved runtime
             if wentFirst:
                 print("I WENT FIRST")
@@ -70,6 +70,7 @@ def main():
         print(npBoard.to_str(gameboard.board, []))
         # move making logic
         bestMove = miniMax(gameboard)
+        print(bestMove)
         gameboard.board = npBoard.set_piece_index(bestMove, 1, gameboard.board)
 
         # send move
@@ -96,24 +97,8 @@ def miniMax(gameboard: npBoard):
     if len(legalMoves) == 0:
         return -1
 
-    # set_piece to do each move
-    # NOTE: best move is in the form (index of move, huristic of move)
-    bestMove = (-9999999, -9999999)
-    for i in legalMoves:
-        # make our move then send it
-        tempBoard = npBoard.set_piece_index(i, 1, gameboard.board)
-        best, bestHeuristic = alphaBetaSearch(gameboard)
-        # best, bestHeuristic = depthLimitedSearch(tempBoard, bestMove[1], 1)
-        if(best != -1):  # if the branch wasnt pruned
-            lastMove = (i, bestHeuristic)
-            if lastMove[1] >= bestMove[1]:
-                bestMove = lastMove
-        else:  # testing only delete this else
-            print("Pruned Branch")
-    # get legal moves again for opponent moves, set_piece for all of those and run heuristic to get board state value
-    # return that heuristic value then run minimax aglo on that
-    # return index of best value
-    return bestMove[0]
+    best, bestHeuristic = alphaBetaSearch(gameboard.board)
+    return best
 
 
 def evaluation(currBoard: npBoard):
@@ -124,35 +109,28 @@ def evaluation(currBoard: npBoard):
     # Legal moves worth 10
     # Corners worth 100
     # B2, B7, G2, and G7 worth -25
-    # ourLegalMoves = len(npBoard.getLegalmoves(1, currBoard))
-    # theirLegalMoves = len(npBoard.getLegalmoves(-1, currBoard))
-    # moveWeight = ourLegalMoves - theirLegalMoves
 
-    # ourDiscs = npBoard.getPlayerPositions(1, currBoard)
-    # theirDiscs = npBoard.getPlayerPositions(-1, currBoard)
-    # discWeight = len(ourDiscs) - len(theirDiscs)
+    if 64 - np.sum(np.abs(currBoard)) <= 14:
+        return np.sum(currBoard)
 
-    # spotWeights = np.array([100, 1, 1, 1, 1, 1, 1, 100,
-    #                         1, -100, -30, -30, -30, -30, -100, 1,
-    #                         1, -30, 10, 10, 10, 10, -30, 1,
-    #                         1, -30, 10, 10, 10, 10, -30, 1,
-    #                         1, -30, 10, 10, 10, 10, -30, 1,
-    #                         1, -30, 10, 10, 10, 10, -30, 1,
-    #                         1, -100, -30, -30, -30, -30, -100, 1,
-    #                         100, 1, 1, 1, 1, 1, 1, 100, ])
-    # # find a way to play slowly if disc number is more than opponents
-    # spotWeight = np.sum(currBoard*spotWeights)
-    # return discWeight + spotWeight + moveWeight
-    spotWeights = np.array([2, 1, 1, 1, 1, 1, 1, 2,
-                            1, 1, 1, 1, 1, 1, 1, 1,
-                            1, 1, 1, 1, 1, 1, 1, 1,
-                            1, 1, 1, 1, 1, 1, 1, 1,
-                            1, 1, 1, 1, 1, 1, 1, 1,
-                            1, 1, 1, 1, 1, 1, 1, 1,
-                            1, 1, 1, 1, 1, 1, 1, 1,
-                            2, 1, 1, 1, 1, 1, 1, 2, ])
+    ourLegalMoves = len(npBoard.getLegalmoves(1, currBoard))
+    theirLegalMoves = len(npBoard.getLegalmoves(-1, currBoard))
+    moveWeight = ourLegalMoves - theirLegalMoves
 
-    return np.sum(currBoard * spotWeights)
+    ourDiscs = len(npBoard.getPlayerPositions(1, currBoard))
+    theirDiscs = len(npBoard.getPlayerPositions(-1, currBoard))
+    discWeight = ourDiscs - theirDiscs
+
+    spotWeights = np.array([10, 1, 1, 1, 1, 1, 1, 10,
+                            1, 1, 1, 1, 1, 1, 1, 1,
+                            1, 1, 1, 1, 1, 1, 1, 1,
+                            1, 1, 1, 1, 1, 1, 1, 1,
+                            1, 1, 1, 1, 1, 1, 1, 1,
+                            1, 1, 1, 1, 1, 1, 1, 1,
+                            1, 1, 1, 1, 1, 1, 1, 1,
+                            10, 1, 1, 1, 1, 1, 1, 10, ])
+    spotWeight = np.sum(currBoard*spotWeights)
+    return discWeight/100 + spotWeight + moveWeight
 
 
 def heuristic(currBoard: npBoard):
