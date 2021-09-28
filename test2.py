@@ -4,10 +4,12 @@ import os.path
 import time
 from npBoard import npBoard
 import numpy as np
+from time import process_time_ns
+
 # NOTE: Blue is first place
 
 BOARD_SIZE = 8
-DEPTH_SEARCH = 3
+DEPTH_SEARCH = 2
 time_limit = 1000
 
 
@@ -24,7 +26,7 @@ def main():
 
         # if not my turn break
         if(not os.path.isfile(__file__ + '.go')):
-            time.sleep(0.05)
+            # time.sleep(0.05)
             # maybe add move scanning here to save time?
             # or start caculating possable furture moves
             continue
@@ -114,38 +116,38 @@ def heuristic(currBoard: npBoard):
     :param currBoard is the current board state
     :return the heuristic score of the board currently from our POV
     """
-    # spotWeights = np.array([2, 1, 1, 1, 1, 1, 1, 2,
-    #                         1, 1, 1, 1, 1, 1, 1, 1,
-    #                         1, 1, 1, 1, 1, 1, 1, 1,
-    #                         1, 1, 1, 1, 1, 1, 1, 1,
-    #                         1, 1, 1, 1, 1, 1, 1, 1,
-    #                         1, 1, 1, 1, 1, 1, 1, 1,
-    #                         1, 1, 1, 1, 1, 1, 1, 1,
-    #                         2, 1, 1, 1, 1, 1, 1, 2, ])
+    spotWeights = np.array([2, 1, 1, 1, 1, 1, 1, 2,
+                            1, 1, 1, 1, 1, 1, 1, 1,
+                            1, 1, 1, 1, 1, 1, 1, 1,
+                            1, 1, 1, 1, 1, 1, 1, 1,
+                            1, 1, 1, 1, 1, 1, 1, 1,
+                            1, 1, 1, 1, 1, 1, 1, 1,
+                            1, 1, 1, 1, 1, 1, 1, 1,
+                            2, 1, 1, 1, 1, 1, 1, 2, ])
 
-    # return np.sum(currBoard * spotWeights)
+    return np.sum(currBoard * spotWeights)
 
     # Legal moves worth 10
     # Corners worth 100
     # B2, B7, G2, and G7 worth -25
-    ourLegalMoves = len(npBoard.getLegalmoves(1, currBoard))
-    theirLegalMoves = len(npBoard.getLegalmoves(-1, currBoard))
-    moveWeight = ourLegalMoves - theirLegalMoves
+    # ourLegalMoves = len(npBoard.getLegalmoves(1, currBoard))
+    # theirLegalMoves = len(npBoard.getLegalmoves(-1, currBoard))
+    # moveWeight = ourLegalMoves - theirLegalMoves
 
-    ourDiscs = npBoard.getPlayerPositions(1, currBoard)
-    theirDiscs = npBoard.getPlayerPositions(-1, currBoard)
-    discWeight = len(ourDiscs) - len(theirDiscs)
+    # ourDiscs = npBoard.getPlayerPositions(1, currBoard)
+    # theirDiscs = npBoard.getPlayerPositions(-1, currBoard)
+    # discWeight = len(ourDiscs) - len(theirDiscs)
 
-    spotWeights = np.array([100, 1, 1, 1, 1, 1, 1, 100,
-                            1, -50, 1, 1, 1, 1, -50, 1,
-                            1, 1, 1, 1, 1, 1, 1, 1,
-                            1, 1, 1, 1, 1, 1, 1, 1,
-                            1, 1, 1, 1, 1, 1, 1, 1,
-                            1, 1, 1, 1, 1, 1, 1, 1,
-                            1, -50, 1, 1, 1, 1, -50, 1,
-                            100, 1, 1, 1, 1, 1, 1, 100, ])
-    spotWeight = np.sum(currBoard*spotWeights)
-    return discWeight + spotWeight + moveWeight
+    # spotWeights = np.array([100, 1, 1, 1, 1, 1, 1, 100,
+    #                         1, -50, 1, 1, 1, 1, -50, 1,
+    #                         1, 1, 1, 1, 1, 1, 1, 1,
+    #                         1, 1, 1, 1, 1, 1, 1, 1,
+    #                         1, 1, 1, 1, 1, 1, 1, 1,
+    #                         1, 1, 1, 1, 1, 1, 1, 1,
+    #                         1, -50, 1, 1, 1, 1, -50, 1,
+    #                         100, 1, 1, 1, 1, 1, 1, 100, ])
+    # spotWeight = np.sum(currBoard*spotWeights)
+    # return discWeight + spotWeight + moveWeight
 
 
 def search(gameboardArray, pruningValue):
@@ -296,4 +298,9 @@ def alphaBetaSearch(gameboardArray):
     return bestMove, bestHeuristic
 
 
+t1_start = process_time_ns()
 main()  # run code
+t1_stop = process_time_ns()
+print("Elapsed time:", t1_stop, t1_start)
+
+print("Elapsed time during the whole program in nanoseconds:", t1_stop - t1_start)

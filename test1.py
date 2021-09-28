@@ -64,7 +64,8 @@ def main():
         # send move
         file = open('move_file', 'w')
         print("test 1 is making the following move")
-        print("index:" + str(bestMove) + " Cords:" + npBoard.writeCoords(bestMove))
+        print("index:" + str(bestMove) + " Cords:" +
+              npBoard.writeCoords(bestMove))
         file.write("test1.py" + npBoard.writeCoords(bestMove))
         file.close()
 
@@ -81,7 +82,7 @@ def miniMax(gameboard: npBoard):
     legalMoves = npBoard.getLegalmoves(1, gameboard.getBoard())
     # row: int, _col: str, color: int)
 
-    #check to see if passing is needed
+    # check to see if passing is needed
     if len(legalMoves) == 0:
         return -1
 
