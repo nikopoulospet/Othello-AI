@@ -9,18 +9,22 @@ from time import process_time_ns
 # NOTE: Blue is first place
 
 BOARD_SIZE = 8
-DEPTH_SEARCH = 2
+DEPTH_LIMIT = 10
 time_limit = 1000
+wentFirst = False
 
 
 def main():
     gameOver = False
     gameboard = npBoard()
     while(not gameOver):
-
+        wentFirst = False
         # if game is over break
         if(os.path.isfile('end_game')):
+            print("Heuristic" + str(evaluation(gameboard.board)))
             print('GG EZ')  # TODO remove for improved runtime
+            if wentFirst:
+                print("I WENT FIRST")
             gameOver = True
             continue
 
@@ -44,12 +48,13 @@ def main():
         # aka no move before this one
         if line == "":
             print("Let me go first")  # TODO remove for improved runtime
+            wentFirst = True
             gameboard.switchToFirstPlayer()
         else:  # if there is a move that exists from the oponet do it
             # Tokenize move
             tokens = line.split()
             player = tokens[0]
-            if(player == "test2.py"):
+            if(player == "agent.py"):
                 continue
             col = tokens[1]
             row = tokens[2]
@@ -61,7 +66,7 @@ def main():
         # print(gameboard.to_str([]))  # TODO remove for improved runtime
         # Find all legal moves
 
-        print("test 2 is making a move starting at this state, self is red")
+        print("Our agent is making a move starting at this state, self is red")
         print(npBoard.to_str(gameboard.board, []))
         # move making logic
         bestMove = miniMax(gameboard)
@@ -69,10 +74,10 @@ def main():
 
         # send move
         file = open('move_file', 'w')
-        print("test 2 is making the following move")
+        print("Our agent is making the following move")
         print("index: " + str(bestMove) + " Cords:" +
               npBoard.writeCoords(bestMove))
-        file.write("test2.py" + npBoard.writeCoords(bestMove))
+        file.write("agent.py" + npBoard.writeCoords(bestMove))
         file.close()
 
 
@@ -119,24 +124,35 @@ def evaluation(currBoard: npBoard):
     # Legal moves worth 10
     # Corners worth 100
     # B2, B7, G2, and G7 worth -25
-    ourLegalMoves = len(npBoard.getLegalmoves(1, currBoard))
-    theirLegalMoves = len(npBoard.getLegalmoves(-1, currBoard))
-    moveWeight = ourLegalMoves - theirLegalMoves
+    # ourLegalMoves = len(npBoard.getLegalmoves(1, currBoard))
+    # theirLegalMoves = len(npBoard.getLegalmoves(-1, currBoard))
+    # moveWeight = ourLegalMoves - theirLegalMoves
 
-    ourDiscs = npBoard.getPlayerPositions(1, currBoard)
-    theirDiscs = npBoard.getPlayerPositions(-1, currBoard)
-    discWeight = len(ourDiscs) - len(theirDiscs)
+    # ourDiscs = npBoard.getPlayerPositions(1, currBoard)
+    # theirDiscs = npBoard.getPlayerPositions(-1, currBoard)
+    # discWeight = len(ourDiscs) - len(theirDiscs)
 
-    spotWeights = np.array([100, 1, 1, 1, 1, 1, 1, 100,
-                            1, -50, 1, 1, 1, 1, -50, 1,
+    # spotWeights = np.array([100, 1, 1, 1, 1, 1, 1, 100,
+    #                         1, -100, -30, -30, -30, -30, -100, 1,
+    #                         1, -30, 10, 10, 10, 10, -30, 1,
+    #                         1, -30, 10, 10, 10, 10, -30, 1,
+    #                         1, -30, 10, 10, 10, 10, -30, 1,
+    #                         1, -30, 10, 10, 10, 10, -30, 1,
+    #                         1, -100, -30, -30, -30, -30, -100, 1,
+    #                         100, 1, 1, 1, 1, 1, 1, 100, ])
+    # # find a way to play slowly if disc number is more than opponents
+    # spotWeight = np.sum(currBoard*spotWeights)
+    # return discWeight + spotWeight + moveWeight
+    spotWeights = np.array([2, 1, 1, 1, 1, 1, 1, 2,
                             1, 1, 1, 1, 1, 1, 1, 1,
                             1, 1, 1, 1, 1, 1, 1, 1,
                             1, 1, 1, 1, 1, 1, 1, 1,
                             1, 1, 1, 1, 1, 1, 1, 1,
-                            1, -50, 1, 1, 1, 1, -50, 1,
-                            100, 1, 1, 1, 1, 1, 1, 100, ])
-    spotWeight = np.sum(currBoard*spotWeights)
-    return discWeight + spotWeight + moveWeight
+                            1, 1, 1, 1, 1, 1, 1, 1,
+                            1, 1, 1, 1, 1, 1, 1, 1,
+                            2, 1, 1, 1, 1, 1, 1, 2, ])
+
+    return np.sum(currBoard * spotWeights)
 
 
 def heuristic(currBoard: npBoard):
@@ -152,8 +168,8 @@ def findMax(gameboardArray, alpha, beta, currDepth):
     :param currDepth is the current depth of the search
     :return currMin is the current minimum heuristic
     """
-    if currDepth == DEPTH_SEARCH:
-        return heuristic(gameboardArray)
+    if currDepth == DEPTH_LIMIT:
+        return evaluation(gameboardArray)
     currMax = np.NINF
     legalMoves = npBoard.getLegalmoves(
         1, gameboardArray)
@@ -175,8 +191,8 @@ def findMin(gameboardArray, alpha, beta, currDepth):
     :param currDepth is the current depth of the search
     :return currMax is the current maximum heuristic
     """
-    if currDepth == DEPTH_SEARCH:
-        return heuristic(gameboardArray)
+    if currDepth == DEPTH_LIMIT:
+        return evaluation(gameboardArray)
     currMin = np.inf
     legalMoves = npBoard.getLegalmoves(-1, gameboardArray)
     for move in legalMoves:

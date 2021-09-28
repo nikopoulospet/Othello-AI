@@ -1,22 +1,28 @@
+from typing import cast
 from Board import PieceColor
 from enum import Enum
 import os.path
 import time
 from npBoard import npBoard
 import numpy as np
+import random
 # NOTE: Blue is first place
 
 BOARD_SIZE = 8
+wentFirst = False
 
 
 def main():
     gameOver = False
     gameboard = npBoard()
     while(not gameOver):
-
+        wentFirst = False
         # if game is over break
         if(os.path.isfile('end_game')):
+            # print(heuristic(gameboard))
             print('GG EZ')  # TODO remove for improved runtime
+            if wentFirst:
+                print("I WENT FIRST")
             gameOver = True
             continue
 
@@ -40,6 +46,7 @@ def main():
         # aka no move before this one
         if line == "":
             print("Let me go first")  # TODO remove for improved runtime
+            wentFirst = True
             gameboard.switchToFirstPlayer()
         else:  # if there is a move that exists from the oponet do it
             # Tokenize move
@@ -86,21 +93,21 @@ def miniMax(gameboard: npBoard):
     if len(legalMoves) == 0:
         return -1
 
-    # set_piece to do each move
-    tree = list()
-    for i in legalMoves:
-        tempBoard = npBoard.set_piece_index(i, 1, gameboard.board)
-        best, bestHeuristic = search(tempBoard)
-        tree.append((i, bestHeuristic))
-    # get legal moves again for opponent moves, set_piece for all of those and run heuristic to get board state value
-    # return that heuristic value then run minimax aglo on that
-    bestMove = (-9999999, -9999999)
-    for move in tree:
-        if move[1] >= bestMove[1]:
-            bestMove = move
-    # return index of best value
-    print(bestMove)
-    return bestMove[0]
+    # # set_piece to do each move
+    # tree = list()
+    # for i in legalMoves:
+    #     tempBoard = npBoard.set_piece_index(i, 1, gameboard.board)
+    #     best, bestHeuristic = search(tempBoard)
+    #     tree.append((i, bestHeuristic))
+    # # get legal moves again for opponent moves, set_piece for all of those and run heuristic to get board state value
+    # # return that heuristic value then run minimax aglo on that
+    # bestMove = (-9999999, -9999999)
+    # for move in tree:
+    #     if move[1] >= bestMove[1]:
+    #         bestMove = move
+    # # return index of best value
+    # print(bestMove)
+    return random.choice(legalMoves)
 
 
 def heuristic(currBoard: npBoard):
