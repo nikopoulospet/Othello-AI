@@ -92,23 +92,23 @@ def miniMax(gameboard: npBoard):
     # check to see if passing is needed
     if len(legalMoves) == 0:
         return -1
+    # return random.choice(legalMoves)
 
-    # # set_piece to do each move
-    # tree = list()
-    # for i in legalMoves:
-    #     tempBoard = npBoard.set_piece_index(i, 1, gameboard.board)
-    #     best, bestHeuristic = search(tempBoard)
-    #     tree.append((i, bestHeuristic))
-    # # get legal moves again for opponent moves, set_piece for all of those and run heuristic to get board state value
-    # # return that heuristic value then run minimax aglo on that
-    # bestMove = (-9999999, -9999999)
-    # for move in tree:
-    #     if move[1] >= bestMove[1]:
-    #         bestMove = move
-    # # return index of best value
-    # print(bestMove)
-    return random.choice(legalMoves)
-
+    # set_piece to do each move
+    tree = list()
+    for i in legalMoves:
+        tempBoard = npBoard.set_piece_index(i, 1, gameboard.board)
+        best, bestHeuristic = search(tempBoard)
+        tree.append((i, bestHeuristic))
+    # get legal moves again for opponent moves, set_piece for all of those and run heuristic to get board state value
+    # return that heuristic value then run minimax aglo on that
+    bestMove = (-9999999, -9999999)
+    for move in tree:
+        if move[1] >= bestMove[1]:
+            bestMove = move
+    # return index of best value
+    print(bestMove)
+    return bestMove[0]
 
 def heuristic(currBoard: npBoard):
     """

@@ -9,7 +9,7 @@ from time import process_time_ns
 # NOTE: Blue is first place
 
 BOARD_SIZE = 8
-DEPTH_LIMIT = 5
+DEPTH_LIMIT = 7
 time_limit = 1000
 wentFirst = False
 
@@ -51,6 +51,8 @@ def main():
         if line == "":
             print("Let me go first")  # TODO remove for improved runtime
             wentFirst = True
+            global DEPTH_LIMIT
+            DEPTH_LIMIT = 6
             gameboard.switchToFirstPlayer()
         else:  # if there is a move that exists from the oponet do it
             # Tokenize move
@@ -79,10 +81,10 @@ def main():
         gameboard.board = npBoard.set_piece_index(bestMove, 1, gameboard.board)
 
         # send move
-        file = open('move_file', 'w')
         print("Our agent is making the following move")
         print("index: " + str(bestMove) + " Cords:" +
               npBoard.writeCoords(bestMove))
+        file = open('move_file', 'w')
         file.write("agent.py" + npBoard.writeCoords(bestMove))
         file.close()
 
@@ -126,7 +128,7 @@ def evaluation(currBoard: npBoard):
     # Corners worth 100
     # B2, B7, G2, and G7 worth -25
 
-    if 64 - np.sum(np.abs(currBoard)) <= 14:
+    if 64 - np.sum(np.abs(currBoard)) <= DEPTH_LIMIT * 2:
         return np.sum(currBoard)
 
     ourLegalMoves = len(npBoard.getLegalmoves(1, currBoard))
@@ -135,16 +137,18 @@ def evaluation(currBoard: npBoard):
 
     discWeight = np.sum(currBoard)
 
-    spotWeights = np.array([10, 1, 1, 1, 1, 1, 1, 10,
-                            1, 1, 1, 1, 1, 1, 1, 1,
-                            1, 1, 1, 1, 1, 1, 1, 1,
-                            1, 1, 1, 1, 1, 1, 1, 1,
-                            1, 1, 1, 1, 1, 1, 1, 1,
-                            1, 1, 1, 1, 1, 1, 1, 1,
-                            1, 1, 1, 1, 1, 1, 1, 1,
-                            10, 1, 1, 1, 1, 1, 1, 10, ])
+    spotWeights = np.array([4, -3, 2, 2, 2, 2, -3, 4,
+                            -3, -4, -1, -1, -1, -1, -4, -3,
+                            2, -1, 1, 0, 0, 1, -1, 2,
+                            2, -1, 0, 1, 1, 0, -1, 2,
+                            2, -1, 0, 1, 1, 0, -1, 2,
+                            2, -1, 1, 0, 0, 1, -1, 2,
+                            -3, -4, -1, -1, -1, -1, -4, -3,
+                            4, -3, 2, 2, 2, 2, -3, 4])
+
     spotWeight = np.sum(currBoard*spotWeights)
-    return discWeight/100 + spotWeight + moveWeight
+
+    return discWeight * -0.25 + spotWeight / 40 + moveWeight / 10
 
 
 def heuristic(currBoard: npBoard):
