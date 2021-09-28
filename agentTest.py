@@ -58,7 +58,7 @@ def main():
             # Tokenize move
             tokens = line.split()
             player = tokens[0]
-            if(player == "agent.py"):
+            if(player == "agentTest.py"):
                 continue
             col = tokens[1]
             row = tokens[2]
@@ -70,7 +70,7 @@ def main():
         # print(gameboard.to_str([]))  # TODO remove for improved runtime
         # Find all legal moves
 
-        print("Our agent is making a move starting at this state, self is red")
+        print("Our agentTest is making a move starting at this state")
         print(npBoard.to_str(gameboard.board, []))
         # move making logic
         t2_start = process_time_ns()
@@ -81,11 +81,11 @@ def main():
         gameboard.board = npBoard.set_piece_index(bestMove, 1, gameboard.board)
 
         # send move
-        print("Our agent is making the following move")
+        print("Our agentTest is making the following move")
         print("index: " + str(bestMove) + " Cords:" +
               npBoard.writeCoords(bestMove))
         file = open('move_file', 'w')
-        file.write("agent.py" + npBoard.writeCoords(bestMove))
+        file.write("agentTest.py" + npBoard.writeCoords(bestMove))
         file.close()
 
 
