@@ -5,6 +5,7 @@ import numpy as np
 import sys
 from npBoard import npBoard
 from random_agent import random_agent
+from agent import miniMax_agent
 
 class OthelloEnv(gym.Env):
     metadata = {'render.modes': ['human']}
@@ -30,27 +31,23 @@ class OthelloEnv(gym.Env):
         update state: returns an observation, reward, done, and debugging info
         input: action is a discrete value 0-63 that represents the move index
         '''
-        nextboard, done, _ = self.step_player(action, self.player1, self.Board.board)
+        nextboard, done, invalid = self.step_player(action, self.player1, self.Board.board)
 
-        if done:
-            # invalid move selected
+        if invalid:
             return nextboard, self.max_reward * -1, done, {}
-        if self.game_over(nextboard):
-            print("game over due to no moves remaining")
+        if done:
             return nextboard, self.calc_winner(nextboard), True, {}
 
         # eval rewards based on opponents move
         p2_reward = self.calculate_reward(nextboard)
 
         nextboard *= -1
-        nextboard, done, _ = self.step_player(None, self.player2, nextboard)
+        nextboard, done, invalid = self.step_player(None, self.player2, nextboard)
         nextboard *= -1
 
-        if done:
-            # invalid move selected
+        if invalid:
             return nextboard, self.max_reward, done, {}
-        if self.game_over(nextboard):
-            print("game over due to no moves remaining")
+        if done:
             return nextboard, self.calc_winner(nextboard), True, {}
 
         # evaluate reward based on opponents move
@@ -63,20 +60,26 @@ class OthelloEnv(gym.Env):
         if not action:
             action = player.get_action(board_state)
 
-        if action not in valid_moves:
+
+        if valid_moves == []:
+            print("no more moves avaliable, tally winner")
+            done = True
+            invalid = False
+            nextboard = board_state
+        elif action not in valid_moves:
             # no valid move chosen so end the game
             print("made an invalid move, move: {}, Valid: {}".format(action, valid_moves))
-            done = True
+            done = False
+            invalid = True
             nextboard = board_state
         else:
             # update board
+            done = False
+            invalid = False
             nextboard = npBoard.set_piece_index(action, 1, board_state)
             self.Board.board = nextboard
-            done = False
-        return nextboard, done, {}
 
-    def game_over(self, board):
-        return False
+        return nextboard, done, invalid
 
     def calc_winner(self, nextboard):
         '''
@@ -132,6 +135,8 @@ def createAgent(policy_type='random',
     '''
     if policy_type == 'random':
         policy = random_agent(rand_seed=rand_seed)
+    elif policy_type == 'minimax':
+        policy = miniMax_agent(search_depth=search_depth)
     else:
         print("yo tf you doing broski")
     return policy
@@ -175,7 +180,23 @@ def sim(player1= 'random',
                 env.render()
 
             if done:
-                print("final reward")
-                print(reward)
+                if reward > 0:
+                    print("player1 won")
+                    wins_p1 +=1
+                elif reward == 0:
+                    print("tie")
+                    draw += 1
+                else:
+                    print("player2 won")
+                    loss_p1 += 1
+
+    print("overall results")
+    print("p1 wins: {}".format(wins_p1))
+    print("draw: {}".format(draw))
+    print("p2 wins: {}".format(loss_p1))
+    print("win percent of p1 over {} games: {}".format(sim_rounds, wins_p1/sim_rounds))
+
 if __name__ == "__main__":
-    sim(sim_rounds=1)
+    sim(player1='minimax',
+        sim_rounds=10,
+        render=False)
