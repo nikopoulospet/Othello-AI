@@ -11,7 +11,7 @@ import time
 # NOTE: Blue is first place
 
 BOARD_SIZE = 8
-DEPTH_LIMIT = 7
+DEPTH_LIMIT = 2
 time_limit = 1000
 wentFirst = False
 
@@ -213,8 +213,38 @@ def findMin(gameboardArray, alpha, beta, currDepth):
     return currMin
 
 
-t1_start = process_time_ns()
-main()  # run code
-t1_stop = process_time_ns()
-print("Elapsed time:", t1_stop, t1_start)
-print("Elapsed time during the whole program in nanoseconds:", t1_stop - t1_start)
+def alphaBetaSearch(gameboardArray):
+    """
+    Depth Limited Search using alpha beta pruning
+    :param gameboardArray is the gameboard
+    :return bestMove, bestHeuristic is the index and heuristic of the optimal move
+    """
+
+"""
+minimax agent wrapper class to use in the gym enviroment. 
+Must impliment action = get_action(board) to make steps in gym
+"""
+class miniMax_agent():
+    def __init__(self, search_depth=1):
+        self.gameboard = npBoard()
+        self.search_depth = search_depth #TODO enforce search_depth in minimax code
+
+    def get_action(self, observation: np.array([])):
+        '''
+        action step of the minimax agent, generate a best move
+        '''
+        # move making logic
+        self.gameboard.board = observation
+        bestMove = miniMax(self.gameboard)
+        return bestMove
+
+if __name__ == "__main__":
+    t1_start = process_time_ns()
+    main()  # run code
+    t1_stop = process_time_ns()
+    print("Elapsed time:", t1_stop, t1_start)
+
+    print("Elapsed time during the whole program in nanoseconds:", t1_stop - t1_start)
+
+
+
