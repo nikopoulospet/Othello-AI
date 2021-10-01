@@ -2,6 +2,7 @@
 *.go
 move_file
 end_game
+ai.py
 
 #vscode files
 .vscode/
