@@ -11,7 +11,7 @@ import time
 # NOTE: Blue is first place
 
 BOARD_SIZE = 8
-DEPTH_LIMIT = 1
+DEPTH_LIMIT = 7
 time_limit = 1000
 wentFirst = False
 
@@ -110,11 +110,16 @@ def miniMax(gameboard: npBoard):
     bestMove = -1
     bestHeuristic = np.NINF
     # look at all the possible responses we have to the opponents move
-    for move in legalMoves:
-        max_time = int(9)
-        start_time = time.time()  # remember when we started
-        while (time.time() - start_time) < max_time:
+    max_time = int(9)
+    start_time = time.time()  # remember when we started
+    while (time.time() - start_time) < max_time:
+        if bestHeuristic != np.NINF:
+            break
+        print(time.time() - start_time)
+        for move in legalMoves:
+            print("Looking at move: ", move)
             for i in range(1, DEPTH_LIMIT):
+                print("Current depth: ", i)
                 currBest = findMin(gameboard.board, bestHeuristic, bestMove, i)
                 if currBest > bestHeuristic:
                     bestHeuristic = currBest
