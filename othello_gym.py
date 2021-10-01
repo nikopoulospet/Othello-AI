@@ -144,7 +144,7 @@ def createAgent(policy_type='random',
 
 def sim(player1= 'random',
         player2= 'random',
-        sim_rounds = 100,
+        sim_rounds = 10,
         search_depth = 1,
         rand_seed = 0,
         reward_function = None,

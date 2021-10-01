@@ -11,7 +11,7 @@ import time
 # NOTE: Blue is first place
 
 BOARD_SIZE = 8
-DEPTH_LIMIT = 2
+DEPTH_LIMIT = 3
 time_limit = 1000
 wentFirst = False
 
@@ -92,7 +92,7 @@ def main():
         file.close()
 
 
-def miniMax(gameboard: npBoard):
+def miniMax(gameboard: npBoard, searchDepth = DEPTH_LIMIT, evalWeights = (-0.25, 40, 10)):
     """
     Implementation of the minimax algorithm with alpha beta pruning
     :param gameboard is the game board
@@ -110,23 +110,17 @@ def miniMax(gameboard: npBoard):
     bestMove = -1
     bestHeuristic = np.NINF
     # look at all the possible responses we have to the opponents move
-    max_time = int(5)
-    start_time = time.time()  # remember when we started
-    while (time.time() - start_time) < max_time:
-        print("Time elapsed: ", time.time() - start_time)
-        for move in legalMoves:
-            print("Looking at move: ", move)
-            for i in range(1, DEPTH_LIMIT):
-                print("Current depth: ", i)
-                currBest = findMin(gameboard.board, bestHeuristic, bestMove, i)
-                if currBest > bestHeuristic:
-                    bestHeuristic = currBest
-                    bestMove = move
+    for move in legalMoves:
+        print("Looking at move: ", move)
+        currBest = findMin(gameboard.board, bestHeuristic, bestMove, 0, evalWeights = evalWeights)
+        if currBest > bestHeuristic:
+            bestHeuristic = currBest
+            bestMove = move
     print("Heuristic Value: " + str(bestHeuristic))
     return bestMove
 
 
-def evaluation(currBoard: npBoard):
+def evaluation(currBoard: npBoard, evalWeights):
     """
     :param currBoard is the current board state
     :return the heuristic score of the board currently from our POV
@@ -155,14 +149,14 @@ def evaluation(currBoard: npBoard):
 
     spotWeight = np.sum(currBoard*spotWeights)
 
-    return discWeight * -0.25 + spotWeight / 40 + moveWeight / 10
+    return discWeight * evalWeights[0] + spotWeight / evalWeights[1] + moveWeight / evalWeights[0]
 
 
 def heuristic(currBoard: npBoard):
     return len(npBoard.getLegalmoves(-1, currBoard))
 
 
-def findMax(gameboardArray, alpha, beta, currDepth):
+def findMax(gameboardArray, alpha, beta, currDepth, evalWeights):
     """
     Maximize level of alphg-beta pruning
     :param gameboardArray is the gameboard
@@ -172,11 +166,14 @@ def findMax(gameboardArray, alpha, beta, currDepth):
     :return currMin is the current minimum heuristic
     """
     if currDepth == DEPTH_LIMIT:
-        return evaluation(gameboardArray)
+        return evaluation(gameboardArray, evalWeights)
+        
     currMax = np.NINF
     legalMoves = npBoard.getLegalmoves(1, gameboardArray)
+
     if not legalMoves:
-        return evaluation(gameboardArray)
+        return evaluation(gameboardArray, evalWeights)
+
     for move in legalMoves:
         currMax = max(currMax, findMin(
             gameboardArray, alpha, beta, currDepth+1))
@@ -186,7 +183,7 @@ def findMax(gameboardArray, alpha, beta, currDepth):
     return currMax
 
 
-def findMin(gameboardArray, alpha, beta, currDepth):
+def findMin(gameboardArray, alpha, beta, currDepth, evalWeights = (-0.25, 40, 10)):
     """
     Minimize level of alphg-beta pruning
     :param gameboardArray is the gameboard
@@ -197,16 +194,16 @@ def findMin(gameboardArray, alpha, beta, currDepth):
     """
     # if we already balls deep
     if currDepth == DEPTH_LIMIT:
-        return evaluation(gameboardArray)
+        return evaluation(gameboardArray, evalWeights)
 
     currMin = np.inf
     legalMoves = npBoard.getLegalmoves(-1, gameboardArray)
     if not legalMoves:
-        return evaluation(gameboardArray)
+        return evaluation(gameboardArray, evalWeights)
     # explore the opontents counter moves to the one we were thinking of making
     for move in legalMoves:
         currMin = min(currMin, findMax(
-            gameboardArray, alpha, beta, currDepth+1))
+            gameboardArray, alpha, beta, currDepth+1, evalWeights))
         if currMin <= alpha:  # prune
             return currMin
         beta = min(beta, currMin)
@@ -219,15 +216,18 @@ def alphaBetaSearch(gameboardArray):
     :param gameboardArray is the gameboard
     :return bestMove, bestHeuristic is the index and heuristic of the optimal move
     """
+    pass
 
 """
 minimax agent wrapper class to use in the gym enviroment. 
 Must impliment action = get_action(board) to make steps in gym
 """
+
 class miniMax_agent():
-    def __init__(self, search_depth=1):
+    def __init__(self, search_depth=1, evaluationFucntionWeights = (-0.25, 40, 10)):
         self.gameboard = npBoard()
         self.search_depth = search_depth #TODO enforce search_depth in minimax code
+        self.evalWeights = evaluationFucntionWeights
 
     def get_action(self, observation: np.array([])):
         '''
@@ -235,7 +235,7 @@ class miniMax_agent():
         '''
         # move making logic
         self.gameboard.board = observation
-        bestMove = miniMax(self.gameboard)
+        bestMove = miniMax(self.gameboard, searchDepth = self.search_depth, evalWeights = self.evalWeights)
         return bestMove
 
 if __name__ == "__main__":
