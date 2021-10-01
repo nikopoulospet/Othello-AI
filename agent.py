@@ -110,12 +110,10 @@ def miniMax(gameboard: npBoard):
     bestMove = -1
     bestHeuristic = np.NINF
     # look at all the possible responses we have to the opponents move
-    max_time = int(9)
+    max_time = int(5)
     start_time = time.time()  # remember when we started
     while (time.time() - start_time) < max_time:
-        if bestHeuristic != np.NINF:
-            break
-        print(time.time() - start_time)
+        print("Time elapsed: ", time.time() - start_time)
         for move in legalMoves:
             print("Looking at move: ", move)
             for i in range(1, DEPTH_LIMIT):

@@ -92,7 +92,7 @@ def miniMax(gameboard: npBoard):
     # check to see if passing is needed
     if len(legalMoves) == 0:
         return -1
-    # return random.choice(legalMoves)
+    return random.choice(legalMoves)
 
     # set_piece to do each move
     tree = list()
@@ -109,6 +109,7 @@ def miniMax(gameboard: npBoard):
     # return index of best value
     print(bestMove)
     return bestMove[0]
+
 
 def heuristic(currBoard: npBoard):
     """
