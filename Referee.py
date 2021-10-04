@@ -45,19 +45,22 @@ def main():
     """
 
     # Read in arguments from command line
-    parser = argparse.ArgumentParser(description="Referee a game of Othello between two programs")
-    parser.add_argument("player_one", type=str, help="Group name of player one")
-    parser.add_argument("player_two", type=str, help="Group name of player two")
+    parser = argparse.ArgumentParser(
+        description="Referee a game of Othello between two programs")
+    parser.add_argument("player_one", type=str,
+                        help="Group name of player one")
+    parser.add_argument("player_two", type=str,
+                        help="Group name of player two")
     args = parser.parse_args(sys.argv[1:])
 
     # Select order randomly
     p1 = args.player_one
     p2 = args.player_two
-    # if random.choice([True, False]):
-    #     # Swap p1 and p2
-    #     p3 = p1
-    #     p1 = p2
-    #     p2 = p3
+    if random.choice([True, False]):
+        # Swap p1 and p2
+        p3 = p1
+        p1 = p2
+        p2 = p3
 
     # Clean any pre-existing files
     clean()

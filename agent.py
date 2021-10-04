@@ -30,7 +30,6 @@ def main():
                 print("I WENT FIRST")
             print("Average Move Time: " + str(np.average(moveTimer[1:])))
             print("Longest Move Time: " + str(np.max(moveTimer[1:])))
-            print("Moves visited: ", movesVisited)
             gameOver = True
             continue
 
