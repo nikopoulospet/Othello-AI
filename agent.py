@@ -117,7 +117,7 @@ def miniMax(gameboard: npBoard):
     # print("Time passed: ", time.time() - start_time)
     for move in legalMoves:
         currBest = findMin(
-            npBoard.set_piece_index(move, 1, gameboard.board), bestHeuristic, bestMove, 0, DEPTH_LIMIT)
+            npBoard.set_piece_index(move, -1, gameboard.board), bestHeuristic, bestMove, 0, DEPTH_LIMIT)
         # print("Current best heuristic: ", currBest)
         if currBest > bestHeuristic:
             bestHeuristic = currBest
