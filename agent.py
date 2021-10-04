@@ -11,7 +11,7 @@ import time
 # NOTE: Blue is first place
 
 BOARD_SIZE = 8
-DEPTH_LIMIT = 7
+DEPTH_LIMIT = 1
 time_limit = 1000
 wentFirst = False
 movesVisited = {}
@@ -79,6 +79,7 @@ def main():
         t2_start = process_time_ns()
         # goodMoves = shallowSearch(gameboard)
         bestMove = miniMax(gameboard)
+        print("Best move index: ", bestMove)
         t2_stop = process_time_ns()
         t2_diff = (t2_stop - t2_start) / 1000000000
         moveTimer = np.append(moveTimer, [[t2_diff]])
@@ -108,15 +109,14 @@ def miniMax(gameboard: npBoard):
     if len(legalMoves) == 0:
         return -1
 
-    bestMove = -1
+    bestMove = np.inf
     bestHeuristic = np.NINF
     # look at all the possible responses we have to the opponents move
-    max_time = int(5)
+    max_time = int(3)
     start_time = time.time()  # remember when we started
     while (time.time() - start_time) < max_time:
-        print("Time elapsed: ", time.time() - start_time)
+        print("Time passed: ", time.time() - start_time)
         for move in legalMoves:
-            print("Looking at move: ", move)
             for i in range(1, DEPTH_LIMIT):
                 currBest = findMin(
                     gameboard.board, bestHeuristic, bestMove, 0, i)
@@ -178,6 +178,7 @@ def findMax(gameboardArray, alpha, beta, currDepth, depthLimit):
     legalMoves = npBoard.getLegalmoves(1, gameboardArray)
     if not legalMoves:
         return evaluation(gameboardArray)
+    # orderedMoves = orderMoves(gameboardArray, legalMoves)
     for move in legalMoves:
         if str(np.append(gameboardArray, move)) in movesVisited:
             continue
@@ -208,6 +209,7 @@ def findMin(gameboardArray, alpha, beta, currDepth, depthLimit):
     if not legalMoves:
         return evaluation(gameboardArray)
     # explore the opontents counter moves to the one we were thinking of making
+    # orderedMoves = orderMoves(gameboardArray, legalMoves)
     for move in legalMoves:
         if str(np.append(gameboardArray, move)) in movesVisited:
             continue
@@ -218,6 +220,14 @@ def findMin(gameboardArray, alpha, beta, currDepth, depthLimit):
             return currMin
         beta = min(beta, currMin)
     return currMin
+
+
+def orderMoves(gameboardArray, moves: list):
+    ordered = []
+    for move in moves:
+        ordered.append((move, evaluation(move)))
+    ordered.sort(key=lambda x: x[1], reverse=True)
+    return ordered
 
 
 t1_start = process_time_ns()
