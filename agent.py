@@ -159,6 +159,10 @@ def evaluation(currBoard: npBoard):
     return discWeight * -0.25 + spotWeight / 40 + moveWeight / 10
 
 
+def heuristic(currBoard: npBoard):
+    return len(npBoard.getLegalmoves(-1, currBoard))
+
+
 def findMax(gameboardArray, alpha, beta, currDepth, depthLimit):
     """
     Maximize level of alphg-beta pruning
@@ -174,7 +178,7 @@ def findMax(gameboardArray, alpha, beta, currDepth, depthLimit):
     legalMoves = npBoard.getLegalmoves(1, gameboardArray)
     if not legalMoves:
         return evaluation(gameboardArray)
-    for move in legalMoves:
+    for move, heur in orderMoves(gameboardArray, legalMoves):
         currMax = max(currMax, findMin(
             npBoard.set_piece_index(move, 1, gameboardArray), alpha, beta, currDepth+1, depthLimit))
         if currMax >= beta:
@@ -201,8 +205,7 @@ def findMin(gameboardArray, alpha, beta, currDepth, depthLimit):
     if not legalMoves:
         return evaluation(gameboardArray)
     # explore the opontents counter moves to the one we were thinking of making
-    # , heur in orderMoves(gameboardArray, legalMoves)
-    for move in legalMoves:
+    for move, heur in orderMoves(gameboardArray, legalMoves):
         currMin = min(currMin, findMax(
             npBoard.set_piece_index(move, -1, gameboardArray), alpha, beta, currDepth+1, depthLimit))
         if currMin <= alpha:  # prune
