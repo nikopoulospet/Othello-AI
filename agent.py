@@ -25,12 +25,6 @@ def main():
         wentFirst = False
         # if game is over break
         if(os.path.isfile('end_game')):
-            print('GG EZ')  # TODO remove for improved runtime
-            if wentFirst:
-                print("I WENT FIRST")
-            print("Average Move Time: " + str(np.average(moveTimer[1:])))
-            print("Longest Move Time: " + str(np.max(moveTimer[1:])))
-            print("Moves visited: ", movesVisited)
             gameOver = True
             continue
 
@@ -53,7 +47,6 @@ def main():
         # check to see if you are making the first move
         # aka no move before this one
         if line == "":
-            print("Let me go first")  # TODO remove for improved runtime
             wentFirst = True
             # global DEPTH_LIMIT
             # DEPTH_LIMIT = 3
@@ -71,11 +64,7 @@ def main():
                 gameboard.board = npBoard.set_piece_coords(
                     int(row), col, -1, gameboard.board)
 
-        # print(gameboard.to_str([]))  # TODO remove for improved runtime
         # Find all legal moves
-
-        print("Our agent is making a move starting at this state, self is red")
-        print(npBoard.to_str(gameboard.board, []))
         # move making logic
         t2_start = process_time_ns()
         # goodMoves = shallowSearch(gameboard)
@@ -86,9 +75,6 @@ def main():
         gameboard.board = npBoard.set_piece_index(bestMove, 1, gameboard.board)
 
         # send move
-        print("Our agent is making the following move")
-        print("index: " + str(bestMove) + " Cords:" +
-              npBoard.writeCoords(bestMove))
         file = open('move_file', 'w')
         file.write("agent.py" + npBoard.writeCoords(bestMove))
         file.close()
@@ -115,16 +101,12 @@ def miniMax(gameboard: npBoard):
     max_time = int(3)
     start_time = time.time()  # remember when we started
     # while (time.time() - start_time) < max_time:
-    # print("Time passed: ", time.time() - start_time)
     for move in legalMoves:
         currBest = findMin(
             gameboard.board, bestHeuristic, bestMove, 0, DEPTH_LIMIT)
-        # print("Current best heuristic: ", currBest)
         if currBest > bestHeuristic:
             bestHeuristic = currBest
             bestMove = move
-    print("Best move index: ", bestMove)
-    print("Heuristic Value: " + str(bestHeuristic))
     return bestMove
 
 
@@ -181,9 +163,9 @@ def findMax(gameboardArray, alpha, beta, currDepth, depthLimit):
         return evaluation(gameboardArray)
     # orderedMoves = orderMoves(gameboardArray, legalMoves)
     for move in legalMoves:
-        # if gameboardArray.__hash__ in movesVisited:
+        # if str(np.append(gameboardArray, move)) in movesVisited:
         #     continue
-        # movesVisited[gameboardArray.__hash__] = evaluation(gameboardArray)
+        # movesVisited[str(np.append(gameboardArray, move))] = 1
         currMax = max(currMax, findMin(
             npBoard.set_piece_index(move, 1, gameboardArray), alpha, beta, currDepth+1, depthLimit))
         if currMax >= beta:
@@ -212,9 +194,9 @@ def findMin(gameboardArray, alpha, beta, currDepth, depthLimit):
     # explore the opontents counter moves to the one we were thinking of making
     # orderedMoves = orderMoves(gameboardArray, legalMoves)
     for move in legalMoves:
-        # if gameboardArray.__hash__ in movesVisited:
+        # if str(np.append(gameboardArray, move)) in movesVisited:
         #     continue
-        # movesVisited[gameboardArray.__hash__] = evaluation(gameboardArray)
+        # movesVisited[str(np.append(gameboardArray, move))] = 1
         currMin = min(currMin, findMax(
             npBoard.set_piece_index(move, 1, gameboardArray), alpha, beta, currDepth+1, depthLimit))
         if currMin <= alpha:  # prune
@@ -234,5 +216,3 @@ def orderMoves(gameboardArray, moves: list):
 t1_start = process_time_ns()
 main()  # run code
 t1_stop = process_time_ns()
-print("Elapsed time:", t1_stop, t1_start)
-print("Elapsed time during the whole program in nanoseconds:", t1_stop - t1_start)
