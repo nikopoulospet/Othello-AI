@@ -113,11 +113,8 @@ def miniMax(gameboard: npBoard):
     max_time = int(5)
     start_time = time.time()  # remember when we started
     while (time.time() - start_time) < max_time:
-        print("Time elapsed: ", time.time() - start_time)
         for move in legalMoves:
-            print("Looking at move: ", move)
             for i in range(1, DEPTH_LIMIT):
-                print("Current depth: ", i)
                 currBest = findMin(gameboard.board, bestHeuristic, bestMove, i)
                 if currBest > bestHeuristic:
                     bestHeuristic = currBest
@@ -177,6 +174,7 @@ def findMax(gameboardArray, alpha, beta, currDepth):
     legalMoves = npBoard.getLegalmoves(1, gameboardArray)
     if not legalMoves:
         return evaluation(gameboardArray)
+    # orderedMoves = orderMoves(gameboardArray, legalMoves)
     for move in legalMoves:
         currMax = max(currMax, findMin(
             gameboardArray, alpha, beta, currDepth+1))
@@ -204,6 +202,7 @@ def findMin(gameboardArray, alpha, beta, currDepth):
     if not legalMoves:
         return evaluation(gameboardArray)
     # explore the opontents counter moves to the one we were thinking of making
+    # orderedMoves = orderMoves(gameboardArray, legalMoves)
     for move in legalMoves:
         currMin = min(currMin, findMax(
             gameboardArray, alpha, beta, currDepth+1))
@@ -212,6 +211,12 @@ def findMin(gameboardArray, alpha, beta, currDepth):
         beta = min(beta, currMin)
     return currMin
 
+def orderMoves(gameboardArray, moves: list):
+    ordered = []
+    for move in moves:
+        ordered.append((move, evaluation(move)))
+    ordered.sort(key=lambda x: x[1], reverse=True)
+    return ordered
 
 t1_start = process_time_ns()
 main()  # run code
