@@ -203,7 +203,7 @@ def findMin(gameboardArray, alpha, beta, currDepth, depthLimit):
     # explore the opontents counter moves to the one we were thinking of making
     for move, heur in orderMoves(gameboardArray, legalMoves):
         currMin = min(currMin, findMax(
-            npBoard.set_piece_index(move, 1, gameboardArray), alpha, beta, currDepth+1, depthLimit))
+            npBoard.set_piece_index(move, -1, gameboardArray), alpha, beta, currDepth+1, depthLimit))
         if currMin <= alpha:  # prune
             return currMin
         beta = min(beta, currMin)

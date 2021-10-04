@@ -34,18 +34,21 @@ class OthelloEnv(gym.Env):
         nextboard, done, invalid = self.step_player(action, self.player1, self.Board.board)
 
         if invalid:
+            print("INVALID MOVE ***********")
             return nextboard, self.max_reward * -1, done, {}
         if done:
             return nextboard, self.calc_winner(nextboard), True, {}
 
         # eval rewards based on opponents move
         p2_reward = self.calculate_reward(nextboard)
-
+        self.render()
         nextboard *= -1
         nextboard, done, invalid = self.step_player(None, self.player2, nextboard)
+        self.render()
         nextboard *= -1
 
         if invalid:
+            print("INVALID MOVE ***********")
             return nextboard, self.max_reward, done, {}
         if done:
             return nextboard, self.calc_winner(nextboard), True, {}
@@ -86,7 +89,8 @@ class OthelloEnv(gym.Env):
         calculates winner and returns appropriate reward
         '''
         sign = np.sum(nextboard)
-        return self.max_reward * (sign/abs(sign))
+        print(sign)
+        return self.max_reward * (sign//abs(sign))
 
     def calculate_reward(self, nextBoard):
         '''
@@ -145,7 +149,7 @@ def createAgent(policy_type='random',
 def sim(player1= 'random',
         player2= 'random',
         sim_rounds = 100,
-        search_depth = 1,
+        search_depth = 2,
         rand_seed = 0,
         reward_function = None,
         render = True):
@@ -197,6 +201,7 @@ def sim(player1= 'random',
     print("win percent of p1 over {} games: {}".format(sim_rounds, wins_p1/sim_rounds))
 
 if __name__ == "__main__":
-    sim(player1='minimax',
-        sim_rounds=10,
+    sim(player1='random',
+        player2='minimax',
+        sim_rounds=1,
         render=False)
