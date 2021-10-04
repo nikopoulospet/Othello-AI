@@ -117,7 +117,7 @@ def miniMax(gameboard: npBoard):
     # print("Time passed: ", time.time() - start_time)
     for move in legalMoves:
         currBest = findMin(
-            gameboard.board, bestHeuristic, bestMove, 0, DEPTH_LIMIT)
+            npBoard.set_piece_index(move, 1, gameboardArray), bestHeuristic, bestMove, 0, DEPTH_LIMIT)
         # print("Current best heuristic: ", currBest)
         if currBest > bestHeuristic:
             bestHeuristic = currBest
@@ -136,7 +136,7 @@ def evaluation(currBoard: npBoard):
     # Corners worth 100
     # B2, B7, G2, and G7 worth -25
 
-    if 64 - np.sum(np.abs(currBoard)) <= DEPTH_LIMIT * 2:
+    if 64 - np.sum(np.abs(currBoard)) <= 14:
         return np.sum(currBoard)
 
     ourLegalMoves = len(npBoard.getLegalmoves(1, currBoard))
@@ -159,10 +159,6 @@ def evaluation(currBoard: npBoard):
     return discWeight * -0.25 + spotWeight / 40 + moveWeight / 10
 
 
-def heuristic(currBoard: npBoard):
-    return len(npBoard.getLegalmoves(-1, currBoard))
-
-
 def findMax(gameboardArray, alpha, beta, currDepth, depthLimit):
     """
     Maximize level of alphg-beta pruning
@@ -179,9 +175,6 @@ def findMax(gameboardArray, alpha, beta, currDepth, depthLimit):
     if not legalMoves:
         return evaluation(gameboardArray)
     for move, heur in orderMoves(gameboardArray, legalMoves):
-        # if gameboardArray.__hash__ in movesVisited:
-        #     continue
-        # movesVisited[gameboardArray.__hash__] = evaluation(gameboardArray)
         currMax = max(currMax, findMin(
             npBoard.set_piece_index(move, 1, gameboardArray), alpha, beta, currDepth+1, depthLimit))
         if currMax >= beta:
@@ -209,9 +202,6 @@ def findMin(gameboardArray, alpha, beta, currDepth, depthLimit):
         return evaluation(gameboardArray)
     # explore the opontents counter moves to the one we were thinking of making
     for move, heur in orderMoves(gameboardArray, legalMoves):
-        # if gameboardArray.__hash__ in movesVisited:
-        #     continue
-        # movesVisited[gameboardArray.__hash__] = evaluation(gameboardArray)
         currMin = min(currMin, findMax(
             npBoard.set_piece_index(move, 1, gameboardArray), alpha, beta, currDepth+1, depthLimit))
         if currMin <= alpha:  # prune
