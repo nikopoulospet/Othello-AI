@@ -13,7 +13,6 @@ import time
 BOARD_SIZE = 8
 DEPTH_LIMIT = 2
 time_limit = 1000
-wentFirst = False
 movesVisited = {}
 
 
@@ -22,22 +21,13 @@ def main():
     gameboard = npBoard()
     moveTimer = np.array([1])
     while(not gameOver):
-        wentFirst = False
         # if game is over break
         if(os.path.isfile('end_game')):
-            print('GG EZ')  # TODO remove for improved runtime
-            if wentFirst:
-                print("I WENT FIRST")
-            print("Average Move Time: " + str(np.average(moveTimer[1:])))
-            print("Longest Move Time: " + str(np.max(moveTimer[1:])))
             gameOver = True
             continue
 
         # if not my turn break
-        if(not os.path.isfile(__file__ + '.go')):
-            # time.sleep(0.05)
-            # maybe add move scanning here to save time?
-            # or start caculating possable furture moves
+        if(not os.path.isfile('agent.go')):
             continue
 
         # read other players move
@@ -50,18 +40,14 @@ def main():
                 line = next_line
 
         # check to see if you are making the first move
-        # aka no move before this one
         if line == "":
-            print("Let me go first")  # TODO remove for improved runtime
-            wentFirst = True
-            # global DEPTH_LIMIT
-            # DEPTH_LIMIT = 3
+            # no move from the opponent, we go first
             gameboard.switchToFirstPlayer()
         else:  # if there is a move that exists from the oponet do it
             # Tokenize move
             tokens = line.split()
             player = tokens[0]
-            if(player == "agent.py"):
+            if(player == "agent"):
                 continue
             col = tokens[1]
             row = tokens[2]
@@ -70,26 +56,15 @@ def main():
                 gameboard.board = npBoard.set_piece_coords(
                     int(row), col, -1, gameboard.board)
 
-        # print(gameboard.to_str([]))  # TODO remove for improved runtime
-        # Find all legal moves
-
-        print("Our agent is making a move starting at this state, self is red")
-        print(npBoard.to_str(gameboard.board, []))
         # move making logic
-        t2_start = process_time_ns()
-        # goodMoves = shallowSearch(gameboard)
         bestMove = miniMax(gameboard)
-        t2_stop = process_time_ns()
-        t2_diff = (t2_stop - t2_start) / 1000000000
-        moveTimer = np.append(moveTimer, [[t2_diff]])
+
+        # make move on the board
         gameboard.board = npBoard.set_piece_index(bestMove, 1, gameboard.board)
 
         # send move
-        print("Our agent is making the following move")
-        print("index: " + str(bestMove) + " Cords:" +
-              npBoard.writeCoords(bestMove))
         file = open('move_file', 'w')
-        file.write("agent.py" + npBoard.writeCoords(bestMove))
+        file.write("agent" + npBoard.writeCoords(bestMove))
         file.close()
 
 
@@ -104,47 +79,47 @@ def miniMax(gameboard: npBoard):
     # get legal moves after
     legalMoves = npBoard.getLegalmoves(1, gameboard.getBoard())
 
-    # check to see if passing is needed
+    # check to see if we need to pass
     if len(legalMoves) == 0:
         return -1
 
+    # bestMove is the index of the bestMove
     bestMove = np.inf
+
+    # bestHeuristic is the index of the bestMove
     bestHeuristic = np.NINF
-    # look at all the possible responses we have to the opponents move
-    max_time = int(3)
-    start_time = time.time()  # remember when we started
-    # while (time.time() - start_time) < max_time:
-    # print("Time passed: ", time.time() - start_time)
+
+    # start tree with our next possible moves
     for move in legalMoves:
+        # start pruning
         currBest = findMin(
             npBoard.set_piece_index(move, 1, gameboard.board), bestHeuristic, bestMove, 0, DEPTH_LIMIT)
         # print("Current best heuristic: ", currBest)
         if currBest > bestHeuristic:
             bestHeuristic = currBest
             bestMove = move
-    print("Best move index: ", bestMove)
-    print("Heuristic Value: " + str(bestHeuristic))
+    # return bestMove index
     return bestMove
 
 
 def evaluation(currBoard: npBoard):
     """
     :param currBoard is the current board state
-    :return the heuristic score of the board currently from our POV
+    :return the evaluation score of the board currently from our POV
     """
-    # Legal moves worth 10
-    # Corners worth 100
-    # B2, B7, G2, and G7 worth -25
 
     # if 64 - np.sum(np.abs(currBoard)) <= 14:
     #     return np.sum(currBoard)
 
+    # weight between our legal moves and theirs, more legal moves is better
     ourLegalMoves = len(npBoard.getLegalmoves(1, currBoard))
     theirLegalMoves = len(npBoard.getLegalmoves(-1, currBoard))
     moveWeight = ourLegalMoves - theirLegalMoves
 
+    # sum board to see who currently has more discs
     discWeight = np.sum(currBoard)
 
+    # based on othello strategy, weight certain spots more than others. Example: corners are good
     spotWeights = np.array([4, -3, 2, 2, 2, 2, -3, 4,
                             -3, -4, -1, -1, -1, -1, -4, -3,
                             2, -1, 1, 0, 0, 1, -1, 2,
@@ -159,10 +134,6 @@ def evaluation(currBoard: npBoard):
     return discWeight * 0.25 + spotWeight / 40 + moveWeight / 10
 
 
-def heuristic(currBoard: npBoard):
-    return len(npBoard.getLegalmoves(-1, currBoard))
-
-
 def findMax(gameboardArray, alpha, beta, currDepth, depthLimit):
     """
     Maximize level of alphg-beta pruning
@@ -170,20 +141,27 @@ def findMax(gameboardArray, alpha, beta, currDepth, depthLimit):
     :param alpha is the current alpha value
     :param beta is the current beta
     :param currDepth is the current depth of the search
-    :return currMin is the current minimum heuristic
+    :return currMin is the current minimum evaluation
     """
+    # we have reached the end of the tree, return evaluation value
     if currDepth == depthLimit:
         return evaluation(gameboardArray)
+
+    # worst case
     currMax = np.NINF
+
+    # see legal moves on max layer (us)
     legalMoves = npBoard.getLegalmoves(1, gameboardArray)
+
+    # return if legalMoves is empty
     if not legalMoves:
         return evaluation(gameboardArray)
     for move, heur in orderMoves(gameboardArray, legalMoves):
         currMax = max(currMax, findMin(
             npBoard.set_piece_index(move, 1, gameboardArray), alpha, beta, currDepth+1, depthLimit))
-        if currMax >= beta:
+        if currMax >= beta:  # prune
             return currMax
-        alpha = max(alpha, currMax)
+        alpha = max(alpha, currMax)  # update alpha
     return currMax
 
 
@@ -194,14 +172,18 @@ def findMin(gameboardArray, alpha, beta, currDepth, depthLimit):
     :param alpha is the current alpha value
     :param beta is the current beta
     :param currDepth is the current depth of the search
-    :return currMax is the current maximum heuristic
+    :return currMax is the current maximum evaluation
     """
-    # if we already balls deep
+    # we have reached the end of the tree, return evaluation value
     if currDepth == depthLimit:
         return evaluation(gameboardArray)
 
+    # worst case
     currMin = np.inf
+
+    # see legal moves on min layer (opponent)
     legalMoves = npBoard.getLegalmoves(-1, gameboardArray)
+
     if not legalMoves:
         return evaluation(gameboardArray)
     # explore the opontents counter moves to the one we were thinking of making
@@ -210,11 +192,16 @@ def findMin(gameboardArray, alpha, beta, currDepth, depthLimit):
             npBoard.set_piece_index(move, -1, gameboardArray), alpha, beta, currDepth+1, depthLimit))
         if currMin <= alpha:  # prune
             return currMin
-        beta = min(beta, currMin)
+        beta = min(beta, currMin)  # update beta
     return currMin
 
 
 def orderMoves(gameboardArray, moves: list):
+    """
+    Order the moves before pruning
+    :param gameboardArray is the gameboard
+    :param moves is the moves to be ordered
+    """
     ordered = []
     for move in moves:
         ordered.append((move, evaluation(gameboardArray)))
