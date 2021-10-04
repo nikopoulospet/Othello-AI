@@ -197,34 +197,24 @@ def sim(player1= 'random',
                     # print("player2 won")
                     loss_p1 += 1
 
-    file = open('gym.log', 'a')
-    file.write("overall results for weights:" + str(weights) + '\n')
-    file.write("\tp1 wins: {}\n".format(wins_p1))
-    file.write("\tdraw: {}\n".format(draw))
-    file.write("\tp2 wins: {}\n".format(loss_p1))
-    file.write("\twin percent of p1 over {} games: {}\n\n".format(sim_rounds, wins_p1/sim_rounds))
-    file.close()
-    print("FININED SOMETHING")
+    print("overall results for weights:" + str(weights) + '\n')
+    print("\tp1 wins: {}\n".format(wins_p1))
+    print("\tdraw: {}\n".format(draw))
+    print("\tp2 wins: {}\n".format(loss_p1))
+    print("\twin percent of p1 over {} games: {}\n\n".format(sim_rounds, wins_p1/sim_rounds))
     return wins_p1/sim_rounds
 
 if __name__ == "__main__":
     #dumb machine learning 
     bestValues = (0,0,0)
     bestScore = 0
-    for discWeight in range(25, 45, 1):
-        discWeight = discWeight/10
-        for spotWeight in range(40, 80, 5):
-            for moveWeight in range(40 , 80, 5):
-                score = sim(player1='minimax',
-                            player2='random',
-                            search_depth_P1 = 1,
-                            search_depth_P2 = 0,
-                            sim_rounds=20,
-                            render=False,
-                            weights=(discWeight,spotWeight,moveWeight))
-                if score > bestScore:
-                    bestValues = (discWeight,spotWeight,moveWeight)
-                    bestScore = score
+    score = sim(player1='minimax',
+                player2='minimax',
+                search_depth_P1 = 3,
+                search_depth_P2 = 1,
+                sim_rounds=20,
+                render=False,
+                weights=(3.5,60,60))
     file = open('gym.log', 'a')
     file.write("Found weights:" + str(bestValues) + '\n')
     file.write("Win Rate:" + str(bestScore) + '\n')
