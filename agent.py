@@ -79,7 +79,6 @@ def main():
         t2_start = process_time_ns()
         # goodMoves = shallowSearch(gameboard)
         bestMove = miniMax(gameboard)
-        print("Best move index: ", bestMove)
         t2_stop = process_time_ns()
         t2_diff = (t2_stop - t2_start) / 1000000000
         moveTimer = np.append(moveTimer, [[t2_diff]])
@@ -114,15 +113,16 @@ def miniMax(gameboard: npBoard):
     # look at all the possible responses we have to the opponents move
     max_time = int(3)
     start_time = time.time()  # remember when we started
-    while (time.time() - start_time) < max_time:
-        print("Time passed: ", time.time() - start_time)
-        for move in legalMoves:
-            for i in range(1, DEPTH_LIMIT):
-                currBest = findMin(
-                    gameboard.board, bestHeuristic, bestMove, 0, i)
-                if currBest > bestHeuristic:
-                    bestHeuristic = currBest
-                    bestMove = move
+    # while (time.time() - start_time) < max_time:
+    # print("Time passed: ", time.time() - start_time)
+    for move in legalMoves:
+        currBest = findMin(
+            gameboard.board, bestHeuristic, bestMove, 0, DEPTH_LIMIT)
+        # print("Current best heuristic: ", currBest)
+        if currBest > bestHeuristic:
+            bestHeuristic = currBest
+            bestMove = move
+    print("Best move index: ", bestMove)
     print("Heuristic Value: " + str(bestHeuristic))
     return bestMove
 
@@ -180,11 +180,11 @@ def findMax(gameboardArray, alpha, beta, currDepth, depthLimit):
         return evaluation(gameboardArray)
     # orderedMoves = orderMoves(gameboardArray, legalMoves)
     for move in legalMoves:
-        if str(np.append(gameboardArray, move)) in movesVisited:
-            continue
-        movesVisited[str(np.append(gameboardArray, move))] = 1
+        # if str(np.append(gameboardArray, move)) in movesVisited:
+        #     continue
+        # movesVisited[str(np.append(gameboardArray, move))] = 1
         currMax = max(currMax, findMin(
-            gameboardArray, alpha, beta, currDepth+1, depthLimit))
+            npBoard.set_piece_index(move, 1, gameboardArray), alpha, beta, currDepth+1, depthLimit))
         if currMax >= beta:
             return currMax
         alpha = max(alpha, currMax)
@@ -211,11 +211,11 @@ def findMin(gameboardArray, alpha, beta, currDepth, depthLimit):
     # explore the opontents counter moves to the one we were thinking of making
     # orderedMoves = orderMoves(gameboardArray, legalMoves)
     for move in legalMoves:
-        if str(np.append(gameboardArray, move)) in movesVisited:
-            continue
-        movesVisited[str(np.append(gameboardArray, move))] = 1
+        # if str(np.append(gameboardArray, move)) in movesVisited:
+        #     continue
+        # movesVisited[str(np.append(gameboardArray, move))] = 1
         currMin = min(currMin, findMax(
-            gameboardArray, alpha, beta, currDepth+1, depthLimit))
+            npBoard.set_piece_index(move, 1, gameboardArray), alpha, beta, currDepth+1, depthLimit))
         if currMin <= alpha:  # prune
             return currMin
         beta = min(beta, currMin)
