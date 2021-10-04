@@ -179,8 +179,7 @@ def findMax(gameboardArray, alpha, beta, currDepth, depthLimit):
     legalMoves = npBoard.getLegalmoves(1, gameboardArray)
     if not legalMoves:
         return evaluation(gameboardArray)
-    # orderedMoves = orderMoves(gameboardArray, legalMoves)
-    for move in legalMoves:
+    for move, heur in orderMoves(gameboardArray, legalMoves):
         # if gameboardArray.__hash__ in movesVisited:
         #     continue
         # movesVisited[gameboardArray.__hash__] = evaluation(gameboardArray)
@@ -210,8 +209,7 @@ def findMin(gameboardArray, alpha, beta, currDepth, depthLimit):
     if not legalMoves:
         return evaluation(gameboardArray)
     # explore the opontents counter moves to the one we were thinking of making
-    # orderedMoves = orderMoves(gameboardArray, legalMoves)
-    for move in legalMoves:
+    for move, heur in orderMoves(gameboardArray, legalMoves):
         # if gameboardArray.__hash__ in movesVisited:
         #     continue
         # movesVisited[gameboardArray.__hash__] = evaluation(gameboardArray)
@@ -226,8 +224,8 @@ def findMin(gameboardArray, alpha, beta, currDepth, depthLimit):
 def orderMoves(gameboardArray, moves: list):
     ordered = []
     for move in moves:
-        ordered.append((move, evaluation(move)))
-    ordered.sort(key=lambda x: x[1], reverse=True)
+        ordered.append((move, evaluation(gameboardArray)))
+    ordered.sort(key=lambda move: move[1], reverse=True)
     return ordered
 
 
