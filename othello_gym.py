@@ -211,10 +211,10 @@ if __name__ == "__main__":
     #dumb machine learning 
     bestValues = (0,0,0)
     bestScore = 0
-    for discWeight in range(25, 45, 1):
+    for discWeight in range(-50, 50, 5):
         discWeight = discWeight/10
-        for spotWeight in range(40, 80, 5):
-            for moveWeight in range(40 , 80, 5):
+        for spotWeight in range(10, 80, 10):
+            for moveWeight in range(10 , 80, 10):
                 score = sim(player1='minimax',
                             player2='random',
                             search_depth_P1 = 1,

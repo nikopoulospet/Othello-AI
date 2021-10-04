@@ -107,7 +107,7 @@ def miniMax(gameboard: npBoard, searchDepth = DEPTH_LIMIT, evalWeights = (-0.25,
     if len(legalMoves) == 0:
         return -1
 
-    bestMove = -1
+    bestMove = np.inf
     bestHeuristic = np.NINF
     # look at all the possible responses we have to the opponents move
     for move in legalMoves:
@@ -173,7 +173,7 @@ def findMax(gameboardArray, alpha, beta, currDepth, evalWeights, searchDepth = D
         return evaluation(gameboardArray, evalWeights)
 
     for move in legalMoves:
-        currMax = max(currMax, findMin(gameboardArray, alpha, beta, currDepth+1, evalWeights=evalWeights, searchDepth = searchDepth))
+        currMax = max(currMax, findMin(npBoard.set_piece_index(move, 1, gameboardArray), alpha, beta, currDepth+1, evalWeights=evalWeights, searchDepth = searchDepth))
         if currMax >= beta:
             return currMax
         alpha = max(alpha, currMax)
@@ -199,7 +199,7 @@ def findMin(gameboardArray, alpha, beta, currDepth, evalWeights = (-0.25, 40, 10
         return evaluation(gameboardArray, evalWeights)
     # explore the opontents counter moves to the one we were thinking of making
     for move in legalMoves:
-        currMin = min(currMin, findMax(gameboardArray, alpha, beta, currDepth, evalWeights, searchDepth = searchDepth))
+        currMin = min(currMin, findMax(npBoard.set_piece_index(move, 1, gameboardArray), alpha, beta, currDepth, evalWeights, searchDepth = searchDepth))
         if currMin <= alpha:  # prune
             return currMin
         beta = min(beta, currMin)

@@ -1,7 +1,7 @@
 from sys import path
 import matplotlib.pyplot as plt
 import numpy as np
-FILE_TO_OPEN = "gym.log"
+FILE_TO_OPEN = "gym_3.log"
 
 file = open(FILE_TO_OPEN, 'r')
 line:str = file.readline()
