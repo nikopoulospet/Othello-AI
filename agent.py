@@ -156,7 +156,7 @@ def evaluation(currBoard: npBoard):
 
     spotWeight = np.sum(currBoard*spotWeights)
 
-    return discWeight * -0.25 + spotWeight / 40 + moveWeight / 10
+    return discWeight * 0.25 + spotWeight / 40 + moveWeight / 10
 
 
 def heuristic(currBoard: npBoard):
@@ -221,14 +221,17 @@ def orderMoves(gameboardArray, moves: list):
     ordered.sort(key=lambda move: move[1], reverse=True)
     return ordered
 
+
 """
 minimax agent wrapper class to use in the gym enviroment. 
 Must impliment action = get_action(board) to make steps in gym
 """
+
+
 class miniMax_agent():
     def __init__(self, search_depth=1):
         self.gameboard = npBoard()
-        self.search_depth = search_depth #TODO enforce search_depth in minimax code
+        self.search_depth = search_depth  # TODO enforce search_depth in minimax code
 
     def get_action(self, observation: np.array([])):
         '''
@@ -238,6 +241,7 @@ class miniMax_agent():
         self.gameboard.board = observation
         bestMove = miniMax(self.gameboard)
         return bestMove
+
 
 if __name__ == "__main__":
     t1_start = process_time_ns()
