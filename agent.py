@@ -30,6 +30,7 @@ def main():
                 print("I WENT FIRST")
             print("Average Move Time: " + str(np.average(moveTimer[1:])))
             print("Longest Move Time: " + str(np.max(moveTimer[1:])))
+            print("Moves visited: ", movesVisited)
             gameOver = True
             continue
 
@@ -180,9 +181,9 @@ def findMax(gameboardArray, alpha, beta, currDepth, depthLimit):
         return evaluation(gameboardArray)
     # orderedMoves = orderMoves(gameboardArray, legalMoves)
     for move in legalMoves:
-        # if str(np.append(gameboardArray, move)) in movesVisited:
+        # if gameboardArray.__hash__ in movesVisited:
         #     continue
-        # movesVisited[str(np.append(gameboardArray, move))] = 1
+        # movesVisited[gameboardArray.__hash__] = evaluation(gameboardArray)
         currMax = max(currMax, findMin(
             npBoard.set_piece_index(move, 1, gameboardArray), alpha, beta, currDepth+1, depthLimit))
         if currMax >= beta:
@@ -211,9 +212,9 @@ def findMin(gameboardArray, alpha, beta, currDepth, depthLimit):
     # explore the opontents counter moves to the one we were thinking of making
     # orderedMoves = orderMoves(gameboardArray, legalMoves)
     for move in legalMoves:
-        # if str(np.append(gameboardArray, move)) in movesVisited:
+        # if gameboardArray.__hash__ in movesVisited:
         #     continue
-        # movesVisited[str(np.append(gameboardArray, move))] = 1
+        # movesVisited[gameboardArray.__hash__] = evaluation(gameboardArray)
         currMin = min(currMin, findMax(
             npBoard.set_piece_index(move, 1, gameboardArray), alpha, beta, currDepth+1, depthLimit))
         if currMin <= alpha:  # prune
