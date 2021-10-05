@@ -1,17 +1,18 @@
-from enum import Enum
 import os.path
 import numpy as np
-from time import process_time_ns
+from threading import Thread, Event
+from time import sleep, process_time_ns, time_ns
+from enum import Enum
 
 # NOTE: Blue is first place
 
 BOARD_SIZE = 8
-DEPTH_LIMIT = 2
-time_limit = 1000
+DEPTH_LIMIT = 4
+TIME_LIMIT = 10
 movesVisited = {}
 
-BOARD_SIZE = 8
-
+# Event object used to send signals from one thread to another
+stop_event = Event()
 
 class Direction(Enum):
     """
@@ -268,11 +269,9 @@ class npBoard:
         out += "   A  B  C  D  E  F  G  H"
         return out
 
-
 def main():
     gameOver = False
     gameboard = npBoard()
-    moveTimer = np.array([1])
     while(not gameOver):
         # if game is over break
         if(os.path.isfile('end_game')):
@@ -280,7 +279,7 @@ def main():
             continue
 
         # if not my turn break
-        if(not os.path.isfile('moistSalamander.go')):
+        if(not os.path.isfile('agent.go')):
             continue
 
         # read other players move
@@ -300,7 +299,7 @@ def main():
             # Tokenize move
             tokens = line.split()
             player = tokens[0]
-            if(player == "moistSalamander"):
+            if(player == "agent"):
                 continue
             col = tokens[1]
             row = tokens[2]
@@ -310,15 +309,16 @@ def main():
                     int(row), col, -1, gameboard.board)
 
         # move making logic
+        t1_start = time_ns()
         bestMove = miniMax(gameboard)
-
         # make move on the board
         gameboard.board = npBoard.set_piece_index(bestMove, 1, gameboard.board)
 
         # send move
         file = open('move_file', 'w')
-        file.write("moistSalamander" + npBoard.writeCoords(bestMove))
+        file.write("agent" + npBoard.writeCoords(bestMove))
         file.close()
+        print("TOTAL TIME: " + str((time_ns() - t1_start)/1000000000))
 
 
 def miniMax(gameboard: npBoard):
@@ -328,7 +328,7 @@ def miniMax(gameboard: npBoard):
     :return the optimal move
     """
     # 1 is our piece, -1 is opponent piece, 0 is empty spot
-
+    startTime = time_ns()
     # get legal moves after
     legalMoves = npBoard.getLegalmoves(1, gameboard.getBoard())
 
@@ -336,23 +336,32 @@ def miniMax(gameboard: npBoard):
     if len(legalMoves) == 0:
         return -1
 
-    # bestMove is the index of the bestMove
-    bestMove = np.inf
+    # multithreading variables
+    threads = [None] * len(legalMoves)
+    results = [None] * len(legalMoves)
+    stop_event.clear()
 
-    # bestHeuristic is the index of the bestMove
-    bestHeuristic = np.NINF
+    # start threads with our next possible moves
+    for moveIndex in range(len(legalMoves)):
+        move = legalMoves[moveIndex]
+        # fork threads
+        threads[moveIndex] = Thread(target=findMin, args=(npBoard.set_piece_index(move, 1, gameboard.board), np.NINF, np.inf, 0, DEPTH_LIMIT, results, moveIndex))
+        threads[moveIndex].start()
+    # wait till %90 of the time limit has passed
+    afterTime = time_ns()
+    elapsedTimeSec = ((afterTime - startTime)/1000000000)
+    timeLeft = (TIME_LIMIT * 0.9) - elapsedTimeSec
+    print("time left: " + str(timeLeft) + " Elapseed Time: " + str(elapsedTimeSec))
 
-    # start tree with our next possible moves
-    for move in legalMoves:
-        # start pruning
-        currBest = findMin(
-            npBoard.set_piece_index(move, 1, gameboard.board), np.NINF, np.inf, 0, DEPTH_LIMIT)
-        # print("Current best heuristic: ", currBest)
-        if currBest > bestHeuristic:
-            bestHeuristic = currBest
-            bestMove = move
+    threads[0].join(timeout=timeLeft)
+    # tell all threads to stop
+    stop_event.set()
+    for i in range(1, len(threads)):
+        threads[i].join()
+    print(results)
+    bestHeuristic = max([i for i in results if i])
     # return bestMove index
-    return bestMove
+    return legalMoves[results.index(bestHeuristic)]
 
 
 def evaluation(currBoard: npBoard):
@@ -361,7 +370,7 @@ def evaluation(currBoard: npBoard):
     :return the evaluation score of the board currently from our POV
     """
 
-    if 64 - np.sum(np.abs(currBoard)) <= DEPTH_LIMIT * 2:
+    if 64 - np.sum(np.abs(currBoard)) <= 14:
         return np.sum(currBoard)
 
     # weight between our legal moves and theirs, more legal moves is better
@@ -387,7 +396,7 @@ def evaluation(currBoard: npBoard):
     return discWeight * 0.25 + spotWeight / 40 + moveWeight / 10
 
 
-def findMax(gameboardArray, alpha, beta, currDepth, depthLimit):
+def findMax(gameboardArray, alpha, beta, currDepth, depthLimit, results, index):
     """
     Maximize level of alphg-beta pruning
     :param gameboardArray is the gameboard
@@ -399,7 +408,9 @@ def findMax(gameboardArray, alpha, beta, currDepth, depthLimit):
     # we have reached the end of the tree, return evaluation value
     if currDepth == depthLimit:
         return evaluation(gameboardArray)
-
+    # if we should be stopped
+    if stop_event.is_set():
+        return np.NINF
     # worst case
     currMax = np.NINF
 
@@ -410,15 +421,21 @@ def findMax(gameboardArray, alpha, beta, currDepth, depthLimit):
     if not legalMoves:
         return evaluation(gameboardArray)
     for move in legalMoves:
-        currMax = max(currMax, findMin(
-            npBoard.set_piece_index(move, 1, gameboardArray), alpha, beta, currDepth+1, depthLimit))
-        if currMax >= beta:  # prune
+        # check if time is up
+        if stop_event.is_set():
             return currMax
-        alpha = max(alpha, currMax)  # update alpha
+        #do min layers
+        currMax = max(currMax, findMin(
+            npBoard.set_piece_index(move, 1, gameboardArray), alpha, beta, currDepth+1, depthLimit, results, index))
+        # prune
+        if currMax >= beta:  
+            return currMax
+        # update alpha    
+        alpha = max(alpha, currMax)  
     return currMax
 
 
-def findMin(gameboardArray, alpha, beta, currDepth, depthLimit):
+def findMin(gameboardArray, alpha, beta, currDepth, depthLimit, results, index):
     """
     Minimize level of alphg-beta pruning
     :param gameboardArray is the gameboard
@@ -430,6 +447,9 @@ def findMin(gameboardArray, alpha, beta, currDepth, depthLimit):
     # we have reached the end of the tree, return evaluation value
     if currDepth == depthLimit:
         return evaluation(gameboardArray)
+    # if we should be stopped
+    if stop_event.is_set():
+        return np.inf
 
     # worst case
     currMin = np.inf
@@ -441,13 +461,21 @@ def findMin(gameboardArray, alpha, beta, currDepth, depthLimit):
         return evaluation(gameboardArray)
     # explore the opontents counter moves to the one we were thinking of making
     for move in legalMoves:
-        currMin = min(currMin, findMax(
-            npBoard.set_piece_index(move, -1, gameboardArray), alpha, beta, currDepth+1, depthLimit))
-        if currMin <= alpha:  # prune
+        # check if time is up
+        if stop_event.is_set():
             return currMin
-        beta = min(beta, currMin)  # update beta
+        #do max layers
+        currMin = min(currMin, findMax(
+            npBoard.set_piece_index(move, -1, gameboardArray), alpha, beta, currDepth+1, depthLimit, results, index))
+        # if first depth then handle the results list
+        if currDepth == 0:
+            results[index] = currMin
+        # prune
+        if currMin <= alpha:  
+            return currMin
+        # update beta
+        beta = min(beta, currMin)  
     return currMin
-
 
 """
 minimax agent wrapper class to use in the gym enviroment. 

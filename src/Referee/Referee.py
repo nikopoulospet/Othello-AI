@@ -17,7 +17,7 @@ import time
 from os import listdir
 from os.path import isfile, join
 
-from src.Referee.Game import Game, EndCondition
+from Game import Game, EndCondition
 from Util import TerminalColor
 
 
