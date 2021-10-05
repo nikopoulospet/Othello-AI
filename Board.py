@@ -31,8 +31,8 @@ class PieceColor(Enum):
     Enum of possible piece colors, or none for an empty spot, on an Othello board
     """
     NONE = "*"
-    BLUE = TerminalColor.BLUE.value + "B" + TerminalColor.NRM.value
-    ORANGE = TerminalColor.YELLOW.value + "O" + TerminalColor.NRM.value
+    BLUE = "B"
+    ORANGE = "O"
 
 
 def interpret_coords(row: int, col: str) -> (int, int):
@@ -72,17 +72,17 @@ class Board:
     """
     Class representing an Othello board
     """
-    board = [PieceColor.NONE] * 64
 
     def __init__(self):
         """
         Initialize Othello board
         """
         # Setup initial board state
-        self.set_piece(5, 'D', PieceColor.BLUE)
-        self.set_piece(5, 'E', PieceColor.ORANGE)
-        self.set_piece(4, 'D', PieceColor.ORANGE)
-        self.set_piece(4, 'E', PieceColor.BLUE)
+        self.board = [PieceColor.NONE] * 64
+        self.set_piece(5, 'D', PieceColor.ORANGE)
+        self.set_piece(5, 'E', PieceColor.BLUE)
+        self.set_piece(4, 'D', PieceColor.BLUE)
+        self.set_piece(4, 'E', PieceColor.ORANGE)
 
     def _get_piece(self, row: int, col: int) -> PieceColor:
         """
@@ -241,7 +241,9 @@ class Board:
             out += str(8 - i) + "  "
             for j in range(8):
                 color = self._get_piece(i, j)
+                out += (TerminalColor.BLUE if color == PieceColor.BLUE else TerminalColor.YELLOW if color == PieceColor.ORANGE else TerminalColor.NRM)
                 out += color.value
+                out += TerminalColor.NRM
                 out += "  "
             out += "\n"
         out += "   A  B  C  D  E  F  G  H"

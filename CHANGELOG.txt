@@ -1,3 +1,13 @@
+v6 (30 September 2021):
+    * Fix starting board state
+
+v5 (29 September 2021):
+    * Add color toggle (--no_color)
+    * Fix deep-copying of Board class
+
+v4 (27 September 2021):
+    * Fix inaccurate timeout
+
 v3 (25 September 2021):
     * Fix handling of valid passes
 

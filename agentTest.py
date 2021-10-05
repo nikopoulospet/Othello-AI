@@ -9,7 +9,7 @@ from time import process_time_ns
 # NOTE: Blue is first place
 
 BOARD_SIZE = 8
-DEPTH_LIMIT = 1
+DEPTH_LIMIT = 2
 time_limit = 1000
 wentFirst = False
 
@@ -77,7 +77,7 @@ def main():
         bestMove = miniMax(gameboard)
         t2_stop = process_time_ns()
         t2_diff = (t2_stop - t2_start) / 1000000000
-        moveTimer=np.append(moveTimer, [[t2_diff]])
+        moveTimer = np.append(moveTimer, [[t2_diff]])
         gameboard.board = npBoard.set_piece_index(bestMove, 1, gameboard.board)
 
         # send move
@@ -103,15 +103,15 @@ def miniMax(gameboard: npBoard):
     # check to see if passing is needed
     if len(legalMoves) == 0:
         return -1
-    
-    #MASTER MAX LAYER
+
+    # MASTER MAX LAYER
     bestMove = -1
     bestHeuristic = np.NINF
     legalMoves = npBoard.getLegalmoves(1, gameboard.board)
-    #look at all the possable resposise we have to the opnets move
+    # look at all the possable resposise we have to the opnets move
     for move in legalMoves:
         currBest = findMin(gameboard.board, bestHeuristic, bestMove, 0)
-        #if the move just simulated was better make it the best move
+        # if the move just simulated was better make it the best move
         if currBest > bestHeuristic:
             bestHeuristic = currBest
             bestMove = move
@@ -148,7 +148,7 @@ def evaluation(currBoard: npBoard):
 
     spotWeight = np.sum(currBoard*spotWeights)
 
-    return discWeight * -0.25 + spotWeight / 40 + moveWeight / 10
+    return discWeight * 0.25 + spotWeight / 40 + moveWeight / 10
 
 
 def heuristic(currBoard: npBoard):
@@ -171,7 +171,8 @@ def findMax(gameboardArray, alpha, beta, currDepth):
     if not legalMoves:
         return evaluation(gameboardArray)
     for move in legalMoves:
-        currMax = max(currMax, findMin(gameboardArray, alpha, beta, currDepth+1))
+        currMax = max(currMax, findMin(
+            gameboardArray, alpha, beta, currDepth+1))
         if currMax >= beta:
             return currMax
         alpha = max(alpha, currMax)
@@ -187,21 +188,23 @@ def findMin(gameboardArray, alpha, beta, currDepth):
     :param currDepth is the current depth of the search
     :return currMax is the current maximum heuristic
     """
-    #if we already balls deep
+    # if we already balls deep
     if currDepth == DEPTH_LIMIT:
         return evaluation(gameboardArray)
-    
+
     currMin = np.inf
     legalMoves = npBoard.getLegalmoves(-1, gameboardArray)
     if not legalMoves:
-        return  evaluation(gameboardArray)
-    #explore the opontents counter moves to the one we were thinking of making
+        return evaluation(gameboardArray)
+    # explore the opontents counter moves to the one we were thinking of making
     for move in legalMoves:
-        currMin = min(currMin, findMax(gameboardArray, alpha, beta, currDepth+1))
-        if currMin <= alpha: #prune
+        currMin = min(currMin, findMax(
+            gameboardArray, alpha, beta, currDepth+1))
+        if currMin <= alpha:  # prune
             return currMin
         beta = min(beta, currMin)
     return currMin
+
 
 def alphaBetaSearch(gameboardArray):
     """

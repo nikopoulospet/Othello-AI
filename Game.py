@@ -110,6 +110,6 @@ class Game:
         with open("end_game", "w") as fp:
             fp.write(msg)
 
-        color = TerminalColor.GREEN.value if EndCondition == EndCondition.VALID else TerminalColor.RED.value
-        print(color + "Game Over: {m}".format(m=msg) + TerminalColor.NRM.value)
+        color = TerminalColor.GREEN if EndCondition == EndCondition.VALID else TerminalColor.RED
+        print(color + "Game Over: {m}".format(m=msg) + TerminalColor.NRM)
         self.game_over = True

@@ -5,7 +5,7 @@ import numpy as np
 import sys
 from npBoard import npBoard
 from random_agent import random_agent
-from agent import miniMax_agent
+from moistSalamander import miniMax_agent
 
 
 class OthelloEnv(gym.Env):
@@ -43,11 +43,11 @@ class OthelloEnv(gym.Env):
 
         # eval rewards based on opponents move
         p2_reward = self.calculate_reward(nextboard)
-        self.render()
+        # self.render()
         nextboard *= -1
         nextboard, done, invalid = self.step_player(
             None, self.player2, nextboard)
-        self.render()
+        # self.render()
         nextboard *= -1
 
         if invalid:
@@ -119,7 +119,7 @@ class OthelloEnv(gym.Env):
 
         spotWeight = np.sum(nextBoard*spotWeights)
 
-        return discWeight * -0.25 + spotWeight / 40 + moveWeight / 10
+        return discWeight * 0.25 + spotWeight / 40 + moveWeight / 10
 
     def reset(self):
         # reset state to normal
@@ -209,5 +209,5 @@ def sim(player1='random',
 if __name__ == "__main__":
     sim(player1='random',
         player2='minimax',
-        sim_rounds=35,
+        sim_rounds=5,
         render=False)

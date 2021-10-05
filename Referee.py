@@ -18,6 +18,7 @@ from os import listdir
 from os.path import isfile, join
 
 from Game import Game, EndCondition
+from Util import TerminalColor
 
 
 def clean():
@@ -45,13 +46,19 @@ def main():
     """
 
     # Read in arguments from command line
-    parser = argparse.ArgumentParser(
-        description="Referee a game of Othello between two programs")
-    parser.add_argument("player_one", type=str,
-                        help="Group name of player one")
-    parser.add_argument("player_two", type=str,
-                        help="Group name of player two")
+    parser = argparse.ArgumentParser(description="Referee a game of Othello between two programs")
+    parser.add_argument("player_one", type=str, help="Group name of player one")
+    parser.add_argument("player_two", type=str, help="Group name of player two")
+    parser.add_argument("--no_color", default=False, action='store_true')
     args = parser.parse_args(sys.argv[1:])
+
+    # Wipe out coloring if flag is on
+    if args.no_color:
+        TerminalColor.RED = ""
+        TerminalColor.NRM = ""
+        TerminalColor.BLUE = ""
+        TerminalColor.YELLOW = ""
+        TerminalColor.GREEN = ""
 
     # Select order randomly
     p1 = args.player_one
@@ -89,7 +96,7 @@ def main():
 
         # Sleep for 10 seconds checking if move_file has been modified every 50 milliseconds
         modified = False
-        for i in range(2000):
+        for i in range(200):
             time.sleep(0.05)
 
             if os.path.getmtime("move_file") > mtime:
