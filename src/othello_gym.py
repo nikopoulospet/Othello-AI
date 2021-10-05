@@ -1,11 +1,9 @@
 import gym
-from gym import error, spaces, utils
-from gym.utils import seeding
+from gym import spaces
 import numpy as np
-import sys
 from npBoard import npBoard
-from random_agent import random_agent
-from agent import miniMax_agent
+from src.Agents.random_agent import random_agent
+from src.Agents.agent import miniMax_agent
 
 class OthelloEnv(gym.Env):
     metadata = {'render.modes': ['human']}

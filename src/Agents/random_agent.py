@@ -1,5 +1,5 @@
 import numpy as np
-from npBoard import npBoard
+from src.npBoard import npBoard
 import random
 """
 random agent class, generate moves and pick a random move

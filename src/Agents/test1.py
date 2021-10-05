@@ -1,9 +1,6 @@
-from typing import cast
-from Board import PieceColor
-from enum import Enum
 import os.path
 import time
-from npBoard import npBoard
+from src.npBoard import npBoard
 import numpy as np
 import random
 # NOTE: Blue is first place

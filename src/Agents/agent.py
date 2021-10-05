@@ -1,11 +1,7 @@
-from Board import PieceColor
-from enum import Enum
 import os.path
-import time
-from npBoard import npBoard
+from src.npBoard import npBoard
 import numpy as np
 from time import process_time_ns
-from itertools import chain
 import time
 
 # NOTE: Blue is first place

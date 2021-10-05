@@ -17,7 +17,7 @@ import time
 from os import listdir
 from os.path import isfile, join
 
-from Game import Game, EndCondition
+from src.Referee.Game import Game, EndCondition
 from Util import TerminalColor
 
 
@@ -32,7 +32,7 @@ def clean():
         re.compile("end_game")
     ]
 
-    files = [f for f in listdir("./") if isfile(join("./", f))]
+    files = [f for f in listdir("../../") if isfile(join("../../", f))]
     for file in files:
         for pattern in patterns:
             if pattern.match(file):
