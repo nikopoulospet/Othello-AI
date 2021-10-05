@@ -5,8 +5,7 @@ import numpy as np
 import sys
 from npBoard import npBoard
 from random_agent import random_agent
-from moistSalamander import miniMax_agent
-
+from agent import miniMax_agent
 
 class OthelloEnv(gym.Env):
     metadata = {'render.modes': ['human']}
@@ -16,9 +15,8 @@ class OthelloEnv(gym.Env):
                  player2=None):
         super(OthelloEnv, self).__init__()
 
-        # define observation space and action space, arrays of 64 elements for the 64 squares in othello
-        self.observation_space = spaces.Box(
-            low=-1 * np.ones(64), high=np.ones(64), dtype=np.int8)
+        #define observation space and action space, arrays of 64 elements for the 64 squares in othello
+        self.observation_space = spaces.Box(low = -1 * np.ones(64), high = np.ones(64), dtype=np.int8)
         self.action_space = spaces.Discrete(64)
         self.Board = npBoard()
 
@@ -27,13 +25,13 @@ class OthelloEnv(gym.Env):
 
         self.max_reward = 999999
 
+
     def step(self, action):
         '''
         update state: returns an observation, reward, done, and debugging info
         input: action is a discrete value 0-63 that represents the move index
         '''
-        nextboard, done, invalid = self.step_player(
-            action, self.player1, self.Board.board)
+        nextboard, done, invalid = self.step_player(action, self.player1, self.Board.board)
 
         if invalid:
             print("INVALID MOVE ***********")
@@ -43,11 +41,8 @@ class OthelloEnv(gym.Env):
 
         # eval rewards based on opponents move
         p2_reward = self.calculate_reward(nextboard)
-        # self.render()
         nextboard *= -1
-        nextboard, done, invalid = self.step_player(
-            None, self.player2, nextboard)
-        # self.render()
+        nextboard, done, invalid = self.step_player(None, self.player2, nextboard)
         nextboard *= -1
 
         if invalid:
@@ -66,6 +61,7 @@ class OthelloEnv(gym.Env):
         if not action:
             action = player.get_action(board_state)
 
+
         if valid_moves == []:
             print("no more moves avaliable, tally winner")
             done = True
@@ -73,8 +69,7 @@ class OthelloEnv(gym.Env):
             nextboard = board_state
         elif action not in valid_moves:
             # no valid move chosen so end the game
-            print("made an invalid move, move: {}, Valid: {}".format(
-                action, valid_moves))
+            print("made an invalid move, move: {}, Valid: {}".format(action, valid_moves))
             done = False
             invalid = True
             nextboard = board_state
@@ -99,7 +94,7 @@ class OthelloEnv(gym.Env):
         '''
         currently just the eval heuristic from agent.py
         '''
-        # if 64 - np.sum(np.abs(nextBoard)) <= DEPTH_LIMIT * 2:
+        #if 64 - np.sum(np.abs(nextBoard)) <= DEPTH_LIMIT * 2:
         #    return np.sum(nextBoard)
 
         ourLegalMoves = len(npBoard.getLegalmoves(1, nextBoard))
@@ -128,12 +123,11 @@ class OthelloEnv(gym.Env):
 
     def render(self, mode='human'):
         # print board info
-        print(npBoard.to_str(self.Board.board, []))
+        print(npBoard.to_str(self.Board.board,[]))
 
     def close(self):
         # close any threads, windows ect
         return
-
 
 def createAgent(policy_type='random',
                 rand_seed=0,
@@ -144,19 +138,21 @@ def createAgent(policy_type='random',
     if policy_type == 'random':
         policy = random_agent(rand_seed=rand_seed)
     elif policy_type == 'minimax':
-        policy = miniMax_agent(search_depth=search_depth)
+        policy = miniMax_agent(search_depth=search_depth, func='norm')
+    elif policy_type == 'disks':
+        policy = miniMax_agent(search_depth=search_depth, func='disks')
     else:
         print("yo tf you doing broski")
     return policy
 
 
-def sim(player1='random',
-        player2='random',
-        sim_rounds=100,
-        search_depth=2,
-        rand_seed=0,
-        reward_function=None,
-        render=True):
+def sim(player1= 'random',
+        player2= 'random',
+        sim_rounds = 100,
+        search_depth = 2,
+        rand_seed = 0,
+        reward_function = None,
+        render = True):
     '''
     starts the sim for playing two Agents against eachother
     '''
@@ -171,7 +167,7 @@ def sim(player1='random',
                           rand_seed=rand_seed,
                           search_depth=search_depth)
 
-    env = OthelloEnv(Player1, Player2)
+    env = OthelloEnv(Player1,Player2)
 
     wins_p1 = draw = loss_p1 = 0
     for i in range(sim_rounds):
@@ -190,7 +186,7 @@ def sim(player1='random',
             if done:
                 if reward > 0:
                     print("player1 won")
-                    wins_p1 += 1
+                    wins_p1 +=1
                 elif reward == 0:
                     print("tie")
                     draw += 1
@@ -202,12 +198,10 @@ def sim(player1='random',
     print("p1 wins: {}".format(wins_p1))
     print("draw: {}".format(draw))
     print("p2 wins: {}".format(loss_p1))
-    print("win percent of p1 over {} games: {}".format(
-        sim_rounds, wins_p1/sim_rounds))
-
+    print("win percent of p1 over {} games: {}".format(sim_rounds, wins_p1/sim_rounds))
 
 if __name__ == "__main__":
-    sim(player1='random',
-        player2='minimax',
-        sim_rounds=5,
-        render=False)
+    sim(player2='disks',
+        player1='minimax',
+        sim_rounds=10,
+        render=True)
