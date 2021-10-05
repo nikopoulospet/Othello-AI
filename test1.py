@@ -27,7 +27,7 @@ def main():
             continue
 
         # if not my turn break
-        if(not os.path.isfile(__file__ + '.go')):
+        if(not os.path.isfile('test1.go')):
             time.sleep(0.05)
             # maybe add move scanning here to save time?
             # or start caculating possable furture moves
