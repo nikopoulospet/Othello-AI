@@ -346,17 +346,18 @@ def miniMax(gameboard: npBoard):
         move = legalMoves[moveIndex]
         # fork threads
         threads[moveIndex] = Thread(target=findMin, args=(npBoard.set_piece_index(move, 1, gameboard.board), np.NINF, np.inf, 0, DEPTH_LIMIT, results, moveIndex))
-        threads[moveIndex].start()
+        print(((time_ns() - startTime)/1000000000))
+    for i in range(len(legalMoves)):
+        threads[i].start()
     # wait till %90 of the time limit has passed
     afterTime = time_ns()
     elapsedTimeSec = ((afterTime - startTime)/1000000000)
     timeLeft = (TIME_LIMIT * 0.9) - elapsedTimeSec
     print("time left: " + str(timeLeft) + " Elapseed Time: " + str(elapsedTimeSec))
-
-    threads[0].join(timeout=timeLeft)
+    sleep(timeLeft)
     # tell all threads to stop
     stop_event.set()
-    for i in range(1, len(threads)):
+    for i in range(len(threads)):
         threads[i].join()
     print(results)
     bestHeuristic = max([i for i in results if i])
@@ -416,7 +417,9 @@ def findMax(gameboardArray, alpha, beta, currDepth, depthLimit, results, index):
 
     # see legal moves on max layer (us)
     legalMoves = npBoard.getLegalmoves(1, gameboardArray)
-
+    
+    if stop_event.is_set():
+        return np.NINF
     # return if legalMoves is empty
     if not legalMoves:
         return evaluation(gameboardArray)
@@ -456,6 +459,9 @@ def findMin(gameboardArray, alpha, beta, currDepth, depthLimit, results, index):
 
     # see legal moves on min layer (opponent)
     legalMoves = npBoard.getLegalmoves(-1, gameboardArray)
+
+    if stop_event.is_set():
+        return np.inf
 
     if not legalMoves:
         return evaluation(gameboardArray)
