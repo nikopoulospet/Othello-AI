@@ -1,6 +1,7 @@
 from enum import Enum
 import os.path
 import numpy as np
+from math import floor
 from time import process_time_ns
 
 # NOTE: Blue is first place
@@ -343,7 +344,7 @@ def miniMax(gameboard: npBoard):
     bestHeuristic = np.NINF
 
     # start tree with our next possible moves
-    for move in legalMoves:
+    for move, heur in orderMoves(gameboard.board, legalMoves):
         # start pruning
         currBest = findMin(
             npBoard.set_piece_index(move, 1, gameboard.board), np.NINF, np.inf, 0, DEPTH_LIMIT)
@@ -447,6 +448,21 @@ def findMin(gameboardArray, alpha, beta, currDepth, depthLimit):
             return currMin
         beta = min(beta, currMin)  # update beta
     return currMin
+
+
+def orderMoves(gameboardArray, moves: list):
+    """
+    Order the moves before pruning
+    :param gameboardArray is the gameboard
+    :param moves is the moves to be ordered
+    """
+    ordered = []
+    for move in moves:
+        # create array of tuple : index, heuristic
+        ordered.append((move, evaluation(gameboardArray)))
+    # sort by best heuristic value
+    ordered.sort(key=lambda move: move[1], reverse=True)
+    return ordered[:floor(len(ordered)/2)]
 
 
 """
