@@ -303,7 +303,7 @@ def managedMiniMaxThread(queIN:Queue, queOUT:Queue, stop_event:Event, start_even
                 board = inputData[1]
                 # make and start miniMax
                 gameboardArray = npBoard.set_piece_index(move, 1, board)
-                temp = findMin(gameboardArray, move, np.NINF, np.inf, 0, DEPTH_LIMIT,stop_event, queOUT)
+                temp = findMin(gameboardArray, np.NINF, np.inf, 0, DEPTH_LIMIT,stop_event)
                 #output the data
                 queOUT.put((move, temp))
             else:
@@ -476,7 +476,6 @@ def findMax(gameboardArray, alpha, beta, currDepth, depthLimit, stop_event):
     """
     # we have reached the end of the tree, return evaluation value
     if currDepth == depthLimit:
-        print("Bottom")
         return evaluation(gameboardArray)
 
     # if we should be stopped
@@ -527,7 +526,6 @@ def findMin(gameboardArray, alpha, beta, currDepth, depthLimit, stop_event):
 
     # we have reached the end of the tree, return evaluation value
     if currDepth == depthLimit:
-        print("Bottom")
         return evaluation(gameboardArray)
 
     # if we should be stopped
