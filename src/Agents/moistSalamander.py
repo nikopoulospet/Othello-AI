@@ -314,6 +314,7 @@ def main():
         bestMove = miniMax(gameboard)
 
         # make move on the board
+        print("Best move index: ", bestMove)
         gameboard.board = npBoard.set_piece_index(bestMove, 1, gameboard.board)
 
         # send move
@@ -344,7 +345,8 @@ def miniMax(gameboard: npBoard):
     bestHeuristic = np.NINF
 
     # start tree with our next possible moves
-    for move, heur in orderMoves(gameboard.board, legalMoves):
+    orderedMoves = orderMoves(gameboard.board, legalMoves, 1)
+    for move, heur in orderedMoves:
         # start pruning
         currBest = findMin(
             npBoard.set_piece_index(move, 1, gameboard.board), np.NINF, np.inf, 0, DEPTH_LIMIT)
@@ -410,7 +412,9 @@ def findMax(gameboardArray, alpha, beta, currDepth, depthLimit):
     # return if legalMoves is empty
     if not legalMoves:
         return evaluation(gameboardArray)
-    for move in legalMoves:
+    orderedMoves = orderMoves(gameboardArray, legalMoves, 1)
+    print("Ordered moves in findMax: ", orderedMoves)
+    for move, heur in orderedMoves:
         currMax = max(currMax, findMin(
             npBoard.set_piece_index(move, 1, gameboardArray), alpha, beta, currDepth+1, depthLimit))
         if currMax >= beta:  # prune
@@ -441,7 +445,10 @@ def findMin(gameboardArray, alpha, beta, currDepth, depthLimit):
     if not legalMoves:
         return evaluation(gameboardArray)
     # explore the opontents counter moves to the one we were thinking of making
-    for move in legalMoves:
+    orderedMoves = orderMoves(gameboardArray, legalMoves, -1)
+    print("Legal moves in findMin: ", legalMoves)
+    print("Ordered moves in findMin: ", orderedMoves)
+    for move, heur in orderedMoves:
         currMin = min(currMin, findMax(
             npBoard.set_piece_index(move, -1, gameboardArray), alpha, beta, currDepth+1, depthLimit))
         if currMin <= alpha:  # prune
@@ -450,18 +457,30 @@ def findMin(gameboardArray, alpha, beta, currDepth, depthLimit):
     return currMin
 
 
-def orderMoves(gameboardArray, moves: list):
+def orderMoves(gameboardArray, moves: list, color: int):
     """
     Order the moves before pruning
     :param gameboardArray is the gameboard
     :param moves is the moves to be ordered
     """
     ordered = []
+    print("Moves to order: ", moves)
+    if len(moves) == 1:
+        print("Only one legal move")
+        ordered.append(
+            (moves[0], evaluation(npBoard.set_piece_index(moves[0], color, gameboardArray))))
+        return ordered
     for move in moves:
         # create array of tuple : index, heuristic
-        ordered.append((move, evaluation(gameboardArray)))
+        ordered.append(
+            (move, evaluation(npBoard.set_piece_index(move, color, gameboardArray))))
     # sort by best heuristic value
-    ordered.sort(key=lambda move: move[1], reverse=True)
+    if color == 1:
+        # maximized
+        ordered.sort(key=lambda move: move[1], reverse=True)
+    else:
+        # minimized
+        ordered.sort(key=lambda move: move[1], reverse=False)
     return ordered[:floor(len(ordered)/2)]
 
 
