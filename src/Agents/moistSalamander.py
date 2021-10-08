@@ -10,6 +10,7 @@ BOARD_SIZE = 8
 DEPTH_LIMIT = 2
 time_limit = 1000
 movesVisited = {}
+skipped = 0
 
 BOARD_SIZE = 8
 
@@ -278,6 +279,9 @@ def main():
         # if game is over break
         if(os.path.isfile('end_game')):
             gameOver = True
+            print("Total possible moves:", len(movesVisited) + skipped)
+            print("Moves visited:", len(movesVisited))
+            print("Moves skipped:", skipped)
             continue
 
         # if not my turn break
@@ -346,7 +350,7 @@ def miniMax(gameboard: npBoard):
 
     # start tree with our next possible moves
     orderedMoves = orderMoves(gameboard.board, legalMoves, 1)
-    for move, heur in orderedMoves:
+    for move in legalMoves:
         # start pruning
         currBest = findMin(
             npBoard.set_piece_index(move, 1, gameboard.board), np.NINF, np.inf, 0, DEPTH_LIMIT)
@@ -413,8 +417,13 @@ def findMax(gameboardArray, alpha, beta, currDepth, depthLimit):
     if not legalMoves:
         return evaluation(gameboardArray)
     orderedMoves = orderMoves(gameboardArray, legalMoves, 1)
-    print("Ordered moves in findMax: ", orderedMoves)
     for move, heur in orderedMoves:
+        # if str(gameboardArray) in movesVisited:
+        #     global skipped
+        #     skipped += 1
+        #     continue
+        # # print("Hashed gameboard: ", gameboardArray.__hash__)
+        # movesVisited[str(gameboardArray)] = move
         currMax = max(currMax, findMin(
             npBoard.set_piece_index(move, 1, gameboardArray), alpha, beta, currDepth+1, depthLimit))
         if currMax >= beta:  # prune
@@ -446,9 +455,13 @@ def findMin(gameboardArray, alpha, beta, currDepth, depthLimit):
         return evaluation(gameboardArray)
     # explore the opontents counter moves to the one we were thinking of making
     orderedMoves = orderMoves(gameboardArray, legalMoves, -1)
-    print("Legal moves in findMin: ", legalMoves)
-    print("Ordered moves in findMin: ", orderedMoves)
     for move, heur in orderedMoves:
+        # if str(gameboardArray) in movesVisited:
+        #     global skipped
+        #     skipped += 1
+        #     # TODO : deter best heuristic here?
+        #     continue
+        # movesVisited[str(gameboardArray)] = move
         currMin = min(currMin, findMax(
             npBoard.set_piece_index(move, -1, gameboardArray), alpha, beta, currDepth+1, depthLimit))
         if currMin <= alpha:  # prune
@@ -464,9 +477,7 @@ def orderMoves(gameboardArray, moves: list, color: int):
     :param moves is the moves to be ordered
     """
     ordered = []
-    print("Moves to order: ", moves)
     if len(moves) == 1:
-        print("Only one legal move")
         ordered.append(
             (moves[0], evaluation(npBoard.set_piece_index(moves[0], color, gameboardArray))))
         return ordered
