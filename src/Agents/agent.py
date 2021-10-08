@@ -1,5 +1,5 @@
 import os.path
-from src.npBoard import npBoard
+from npBoard import npBoard
 import numpy as np
 from time import process_time_ns
 import time

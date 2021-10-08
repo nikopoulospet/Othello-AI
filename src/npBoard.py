@@ -2,7 +2,7 @@ import random
 import numpy as np
 from enum import Enum
 
-from src.Referee.Util import TerminalColor
+from Referee.Util import TerminalColor
 
 BOARD_SIZE = 8
 

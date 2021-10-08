@@ -8,7 +8,7 @@ from numpy.core.numeric import Inf
 # NOTE: Blue is first place
 
 BOARD_SIZE = 8
-DEPTH_LIMIT = 6
+DEPTH_LIMIT = 8
 TIME_LIMIT = 10
 NUM_THREADS = 20
 TIME_PERCENT = .98 # becoming unstable around .9
@@ -373,8 +373,6 @@ def main():
         file.write("agent" + bestMoveString)
         file.close()
         print("Played the move: " + bestMoveString + "\n")
-        stop_event.clear()
-        start_event.clear()
         # make move on the board
         gameboard.board = npBoard.set_piece_index(bestMove, 1, gameboard.board)
 
@@ -428,6 +426,8 @@ def miniMax(gameboard: npBoard, startTime):
         if (data[1] > bestHur) and (not data[1] == Inf) and data[0] in legalMoves:
             bestMove = data[0]
             bestHur = data[1]
+    stop_event.clear()
+    start_event.clear()
     return bestMove
 
 
@@ -567,10 +567,15 @@ Must impliment action = get_action(board) to make steps in gym
 """
 
 
-class miniMax_agent():
+class miniMaxSubOrecess_agent():
     def __init__(self, search_depth=1):
         self.gameboard = npBoard()
         self.search_depth = search_depth  # TODO enforce search_depth in minimax code
+                # premake and start subprocesses
+        self.threadsList = [None] * NUM_THREADS
+        for i in range(NUM_THREADS):
+            self.threadsList[i] = Process(target=managedMiniMaxThread, args=(threadInGlobal[i], threadOutGlobal[i],stop_event,start_event,kill_thread_event))
+            self.threadsList[i].start()
 
     def get_action(self, observation: np.array([])):
         '''
@@ -578,8 +583,18 @@ class miniMax_agent():
         '''
         # move making logic
         self.gameboard.board = observation
-        bestMove = miniMax(self.gameboard)
+        startTime = time_ns()
+        bestMove = miniMax(self.gameboard,startTime)
         return bestMove
+    
+    def kill_threads(self):
+        kill_thread_event.set()
+        stop_event.set()
+        start_event.clear()
+        for i in range(NUM_THREADS):
+            self.threadsList[i].terminate()
+            self.threadsList[i].join()
+        gameOver = True
 
 
 if __name__ == "__main__":

@@ -17,8 +17,8 @@ import time
 from os import listdir
 from os.path import isfile, join
 
-from Game import Game, EndCondition
-from Util import TerminalColor
+from Referee.Game import Game, EndCondition
+from Referee.Util import TerminalColor
 
 
 def clean():

@@ -2,8 +2,9 @@ import gym
 from gym import spaces
 import numpy as np
 from npBoard import npBoard
-from src.Agents.random_agent import random_agent
-from src.Agents.agent import miniMax_agent
+from Agents.random_agent import random_agent
+from Agents.agent import miniMax_agent
+from Agents.processAgent import miniMaxSubOrecess_agent
 
 class OthelloEnv(gym.Env):
     metadata = {'render.modes': ['human']}
@@ -139,6 +140,8 @@ def createAgent(policy_type='random',
         policy = miniMax_agent(search_depth=search_depth, func='norm')
     elif policy_type == 'disks':
         policy = miniMax_agent(search_depth=search_depth, func='disks')
+    elif policy_type == 'process':
+        policy = miniMaxSubOrecess_agent(search_depth=search_depth)
     else:
         print("yo tf you doing broski")
     return policy
@@ -199,7 +202,7 @@ def sim(player1= 'random',
     print("win percent of p1 over {} games: {}".format(sim_rounds, wins_p1/sim_rounds))
 
 if __name__ == "__main__":
-    sim(player2='disks',
+    sim(player2='process',
         player1='minimax',
         sim_rounds=10,
         render=True)
