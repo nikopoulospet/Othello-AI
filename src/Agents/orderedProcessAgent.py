@@ -9,9 +9,9 @@ from math import floor
 # NOTE: Blue is first place
 
 BOARD_SIZE = 8
-DEPTH_LIMIT = 5
-TIME_LIMIT = 10
-NUM_THREADS = 20
+DEPTH_LIMIT = 6
+TIME_LIMIT = 4
+NUM_THREADS = 15
 TIME_PERCENT = .98  # becoming unstable around .9
 CUT_LOSSES_PERCENT = .99  # becoming unstable around .9
 movesVisited = {}
@@ -308,7 +308,6 @@ def managedMiniMaxThread(queIN: Queue, queOUT: Queue, stop_event: Event, start_e
                 board = inputData[1]
                 # make and start miniMax
                 gameboardArray = npBoard.set_piece_index(move, 1, board)
-                print("Hello there, starting search")
                 temp = findMin(gameboardArray, np.NINF, np.inf,
                                0, DEPTH_LIMIT, stop_event)
                 # output the data
@@ -397,7 +396,6 @@ def miniMax(gameboard: npBoard, startTime):
     # get legal moves after
     legalMoves = npBoard.getLegalmoves(1, gameboard.getBoard())
     numLegalMoves = len(legalMoves)
-    print("Legal moves: ", legalMoves)
 
     # check to see if we need to pass or if there is one move
     if numLegalMoves == 0:
