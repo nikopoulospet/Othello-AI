@@ -7,10 +7,8 @@ Author: Dyllan Cole <dcole@wpi.edu>
 Date:   14 September 2021
 """
 
-from enum import Enum
 
-
-class TerminalColor(Enum):
+class TerminalColor():
     """
     ANSI terminal escape codes for various colors.
     """

@@ -1,12 +1,12 @@
 import gym
-from gym import error, spaces, utils
-from gym.utils import seeding
+from gym import spaces
 import numpy as np
-import sys
 from npBoard import npBoard
-from random_agent import random_agent
-from agent import miniMax_agent
-
+from Agents.random_agent import random_agent
+from Agents.agent import miniMax_agent
+from Agents.moistSalamander import miniMax_agent
+from Agents.processAgent import miniMaxSubOrecess_agent
+from Agents.orderedProcessAgent import orderedProcess_Agent
 
 class OthelloEnv(gym.Env):
     metadata = {'render.modes': ['human']}
@@ -43,11 +43,9 @@ class OthelloEnv(gym.Env):
 
         # eval rewards based on opponents move
         p2_reward = self.calculate_reward(nextboard)
-        self.render()
         nextboard *= -1
         nextboard, done, invalid = self.step_player(
             None, self.player2, nextboard)
-        self.render()
         nextboard *= -1
 
         if invalid:
@@ -119,7 +117,7 @@ class OthelloEnv(gym.Env):
 
         spotWeight = np.sum(nextBoard*spotWeights)
 
-        return discWeight * -0.25 + spotWeight / 40 + moveWeight / 10
+        return discWeight * 0.25 + spotWeight / 40 + moveWeight / 10
 
     def reset(self):
         # reset state to normal
@@ -137,7 +135,7 @@ class OthelloEnv(gym.Env):
 
 def createAgent(policy_type='random',
                 rand_seed=0,
-                search_depth=1):
+                search_depth=2):
     '''
     Agent factory to help deploy different algos for training and analysis
     '''
@@ -145,6 +143,14 @@ def createAgent(policy_type='random',
         policy = random_agent(rand_seed=rand_seed)
     elif policy_type == 'minimax':
         policy = miniMax_agent(search_depth=search_depth)
+    elif policy_type == 'disks':
+        policy = miniMax_agent(search_depth=search_depth, func='disks')
+    elif policy_type == 'moist':
+        policy = miniMax_agent(search_depth=2)
+    elif policy_type == 'process':
+        policy = miniMaxSubOrecess_agent(search_depth=2)
+    elif policy_type == 'ordered':
+        policy = orderedProcess_Agent(search_depth=search_depth)
     else:
         print("yo tf you doing broski")
     return policy
@@ -183,11 +189,23 @@ def sim(player1='random',
         while not done:
             action = Player1.get_action(obs)
             obs, reward, done, _ = env.step(action)
-            print("p1 reward {}".format(reward))
+            # print("p1 reward {}".format(reward))
             if render:
                 env.render()
 
             if done:
+                env.render()
+
+            if (player1=='process' or player1=='ordered' ):
+                Player1.kill_threads()
+                Player1 = createAgent(policy_type=player1,
+                          rand_seed=rand_seed,
+                          search_depth=search_depth)
+            if (player2=='process' or player2=='ordered' ):
+                Player2.kill_threads()
+                Player2 = createAgent(policy_type=player2,
+                          rand_seed=rand_seed,
+                          search_depth=search_depth)
                 if reward > 0:
                     print("player1 won")
                     wins_p1 += 1
@@ -197,7 +215,9 @@ def sim(player1='random',
                 else:
                     print("player2 won")
                     loss_p1 += 1
-
+    file = open("gym.log", 'a')
+    file.write(str(search_depth) + " " + str(wins_p1/sim_rounds))
+    file.close()
     print("overall results")
     print("p1 wins: {}".format(wins_p1))
     print("draw: {}".format(draw))
@@ -207,7 +227,9 @@ def sim(player1='random',
 
 
 if __name__ == "__main__":
-    sim(player1='random',
-        player2='minimax',
-        sim_rounds=35,
-        render=False)
+    for i in range(2,8,2):
+        sim(player2='process',
+            player1='ordered',
+            sim_rounds=20,
+            search_depth=i,
+            render=False)

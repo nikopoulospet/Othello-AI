@@ -1,11 +1,12 @@
-import random
-import numpy as np
 from enum import Enum
-
-from numpy.lib.function_base import copy
-from Util import TerminalColor
+import os.path
+import time
+import numpy as np
+import random
+# NOTE: Blue is first place
 
 BOARD_SIZE = 8
+wentFirst = False
 
 
 class Direction(Enum):
@@ -29,10 +30,10 @@ class npBoard:
 
     def __init__(self):
         self.board = np.zeros(64)
-        self.board = npBoard.set_piece_coords(5, 'D', -1, self.board)
-        self.board = npBoard.set_piece_coords(5, 'E', 1, self.board)
-        self.board = npBoard.set_piece_coords(4, 'D', 1, self.board)
-        self.board = npBoard.set_piece_coords(4, 'E', -1, self.board)
+        self.board = npBoard.set_piece_coords(5, 'D', 1, self.board)
+        self.board = npBoard.set_piece_coords(5, 'E', -1, self.board)
+        self.board = npBoard.set_piece_coords(4, 'D', -1, self.board)
+        self.board = npBoard.set_piece_coords(4, 'E', 1, self.board)
 
     def switchToFirstPlayer(self):
         self.board *= -1
@@ -249,14 +250,14 @@ class npBoard:
                 color = board[i * 8 + j]
                 temp = "0"
                 if color == 1:
-                    temp = TerminalColor.RED.value + "R" + TerminalColor.NRM.value
+                    temp = TerminalColor.RED + "R" + TerminalColor.NRM
                 elif color == -1:
-                    temp = TerminalColor.BLUE.value + "B" + TerminalColor.NRM.value
+                    temp = TerminalColor.BLUE + "B" + TerminalColor.NRM
                 if (i*8 + j) in pot_moves:
                     if not temp == "0":
-                        temp = TerminalColor.YELLOW.value + "X" + TerminalColor.NRM.value
+                        temp = TerminalColor.YELLOW + "X" + TerminalColor.NRM
                     else:
-                        temp = TerminalColor.GREEN.value + "X" + TerminalColor.NRM.value
+                        temp = TerminalColor.GREEN + "X" + TerminalColor.NRM
                 out += temp
                 out += "  "
             out += "\n"
@@ -264,21 +265,136 @@ class npBoard:
         return out
 
 
-if __name__ == "__main__":
-    print("GAMEBOARD TESTS")
+def main():
+    gameOver = False
     gameboard = npBoard()
-    p = 1
-    for i in range(100):
-        p *= -1
-        moves = npBoard.getLegalmoves(p, gameboard.board)
-        print("++++ player {} moves ++++".format(p))
-        if moves == []:
-            print("player {} has no moves left".format(p))
-            break
-        chosen = random.choice(moves)
-        print("Player {} has chosen this move {}".format(p, chosen))
-        print("all possible moves: {}".format(
-            [npBoard.getCoordsFromIndex(i) for i in moves]))
-        print(npBoard.to_str(gameboard.board, moves))
-        print(" ")
-        gameboard.board = npBoard.set_piece_index(chosen, p, gameboard.board)
+    while(not gameOver):
+        wentFirst = False
+        # if game is over break
+        if(os.path.isfile('end_game')):
+            # print(heuristic(gameboard))
+            print('GG EZ')  # TODO remove for improved runtime
+            if wentFirst:
+                print("I WENT FIRST")
+            gameOver = True
+            continue
+
+        # if not my turn break
+        if(not os.path.isfile('test1.py.go')):
+            time.sleep(0.05)
+            # maybe add move scanning here to save time?
+            # or start caculating possable furture moves
+            continue
+
+        # read other players move
+        file = open("move_file", "r")
+        line = ""
+        for next_line in file.readlines():
+            if next_line.isspace():
+                break
+            else:
+                line = next_line
+
+        # check to see if you are making the first move
+        # aka no move before this one
+        if line == "":
+            print("Let me go first")  # TODO remove for improved runtime
+            wentFirst = True
+            gameboard.switchToFirstPlayer()
+        else:  # if there is a move that exists from the oponet do it
+            # Tokenize move
+            tokens = line.split()
+            player = tokens[0]
+            if(player == "test1.py"):
+                continue
+            col = tokens[1]
+            row = tokens[2]
+            # update internal board
+            if col != "P":
+                gameboard.board = npBoard.set_piece_coords(
+                    int(row), col, -1, gameboard.board)
+
+        # print(gameboard.to_str([]))  # TODO remove for improved runtime
+        # Find all legal moves
+        # print(npBoard.to_str(gameboard.board, []))
+        # move making logic
+        bestMove = miniMax(gameboard)
+        gameboard.board = npBoard.set_piece_index(bestMove, 1, gameboard.board)
+        # send move
+        file = open('move_file', 'w')
+        file.write("test1.py" + npBoard.writeCoords(bestMove))
+        file.close()
+
+
+def miniMax(gameboard: npBoard):
+    """
+    Implementation of the minimax algorithm with alpha beta pruning
+    :param gameboard is the game board
+    :return the optimal move
+    """
+    # 1 is our piece, -1 is opponent piece, 0 is empty spot
+
+    # get legal moves after
+    legalMoves = npBoard.getLegalmoves(1, gameboard.getBoard())
+    # row: int, _col: str, color: int)
+
+    # check to see if passing is needed
+    if len(legalMoves) == 0:
+        return -1
+    return random.choice(legalMoves)
+
+    # set_piece to do each move
+    tree = list()
+    for i in legalMoves:
+        tempBoard = npBoard.set_piece_index(i, 1, gameboard.board)
+        best, bestHeuristic = search(tempBoard)
+        tree.append((i, bestHeuristic))
+    # get legal moves again for opponent moves, set_piece for all of those and run heuristic to get board state value
+    # return that heuristic value then run minimax aglo on that
+    bestMove = (-9999999, -9999999)
+    for move in tree:
+        if move[1] >= bestMove[1]:
+            bestMove = move
+    # return index of best value
+    print(bestMove)
+    return bestMove[0]
+
+
+def heuristic(currBoard: npBoard):
+    """
+    :param currBoard is the current board state
+    :return the heuristic score of the board currently from our POV
+    """
+    spotWeights = np.array([2, 1, 1, 1, 1, 1, 1, 2,
+                            1, 1, 1, 1, 1, 1, 1, 1,
+                            1, 1, 1, 1, 1, 1, 1, 1,
+                            1, 1, 1, 1, 1, 1, 1, 1,
+                            1, 1, 1, 1, 1, 1, 1, 1,
+                            1, 1, 1, 1, 1, 1, 1, 1,
+                            1, 1, 1, 1, 1, 1, 1, 1,
+                            2, 1, 1, 1, 1, 1, 1, 2, ])
+
+    return np.sum(currBoard * spotWeights)
+
+
+def search(gameboardArray):
+    """
+    Implementation of the search algorithm upon tree of moves
+    :param currBoard is the current board state
+    :return the legal moves heuristics of a board state
+    """
+    bestMove = 9999999
+    bestHeuristic = 9999999
+    legalMoves = npBoard.getLegalmoves(-1, gameboardArray)
+    # print(npBoard.to_str(gameboardArray, legalMoves))
+    for i in legalMoves:
+        tempBoard = npBoard.set_piece_index(
+            index=i, color=-1, board=gameboardArray)
+        tempHeuristic = heuristic(tempBoard)
+        if bestHeuristic > tempHeuristic:
+            bestHeuristic = tempHeuristic
+            bestMove = i
+    return bestMove, bestHeuristic
+
+
+main()  # run code
