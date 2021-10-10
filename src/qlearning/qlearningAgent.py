@@ -43,7 +43,7 @@ class Qagent():
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
         if load:
-            policy_network.load_state_dict(torch.load('model'))
+            policy_network.load_state_dict(torch.load('model_2000_run'))
 
         self.ALPHA_policy_network = policy_network.float().to(self.device)
         self.BETA_policy_network = policy_network.float().to(self.device)
@@ -119,17 +119,14 @@ class Qagent():
         rate = self.strategy.get_exploration_rate(self.current_step)
         self.current_step += 1
 
-        with torch.no_grad():
-            state = Qagent.extract_features(np.expand_dims(state, axis=0))
-            state = torch.tensor(state.astype(np.float32))
-            state = state.to(self.device)
-            guesses = self.ALPHA_policy_network(state).cpu()
-            move = np.argmax(guesses).item()
-            flatGuesses = guesses.flatten()
-            if rate > 0.75:
-                print(flatGuesses[move])
-                return randrange(0, 64, 1)
-            return  move # exploitation step
+        if rate > random():
+            return choice(np.append(npBoard.getLegalmoves(1, state), randrange(0, 64, 1)))  # random exploration of state space
+        else:
+            with torch.no_grad():
+                state = Qagent.extract_features(np.expand_dims(state, axis=0))
+                state = torch.tensor(state.astype(np.float32))
+                state = state.to(self.device)
+                return np.argmax(self.ALPHA_policy_network(state).cpu()).item()  # exploitation step
 
 
 class QValues():

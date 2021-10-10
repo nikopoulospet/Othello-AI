@@ -144,7 +144,7 @@ def createAgent(policy_type='random',
                 search_depth=1,
                 eps_start=1,
                 eps_end=0.01,
-                decay=0.001,
+                decay=0.0025,
                 lr=0.001):
     '''
     Agent factory to help deploy different algos for training and analysis
