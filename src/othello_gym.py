@@ -11,6 +11,7 @@ from qlearning.strategy import EpsilonGreedyStrategy
 from qlearning.deepQNetwork import DQN, FCN
 from matplotlib import pyplot as plt
 
+
 class OthelloEnv(gym.Env):
     metadata = {'render.modes': ['human']}
 
@@ -32,34 +33,39 @@ class OthelloEnv(gym.Env):
 
         self.max_reward = 999999
 
-
     def step(self, action, board):
         '''
         update state: returns an observation, reward, done, and debugging info
         input: action is a discrete value 0-63 that represents the move index
         '''
         self.steps += 1
-        nextboard, done, invalid = self.step_player(action, self.player1, board)
+        nextboard, done, invalid, act = self.step_player(action, self.player1, board)
         if invalid:
-            return nextboard, self.max_reward * -1, True, {}
+            return nextboard, self.max_reward * -1, True, None
         if done:
-            return nextboard, self.calc_winner(nextboard), True, {}
+            return nextboard, self.calc_winner(nextboard), True, None
 
         # eval rewards based on opponents move
         p2_reward = self.calculate_reward(nextboard)
+
         nextboard *= -1
-        nextboard, done, invalid = self.step_player(None, self.player2, nextboard)
+        temp = torch.tensor(nextboard.astype(np.float32)).unsqueeze(0)
+        nextboard, done, invalid, act = self.step_player(None, self.player2, nextboard)
+        exp = Experience(state=temp,
+                         action=torch.tensor(np.array([action]).astype(np.int64)),
+                         next_state=torch.tensor(nextboard.astype(np.float32)).unsqueeze(0),
+                         reward=torch.tensor(np.array([p2_reward]).astype(np.float32)))
         nextboard *= -1
 
         if invalid:
-            return nextboard, self.max_reward, True, {}
+            return nextboard, self.max_reward, True, exp
         if done:
-            return nextboard, self.calc_winner(nextboard), True, {}
+            return nextboard, self.calc_winner(nextboard), True, exp
 
         # evaluate reward based on opponents move
         p1_reward = self.calculate_reward(nextboard)
         self.board = np.array(nextboard)
-        return np.array(nextboard, dtype=np.int8), p1_reward, done, {}
+        return np.array(nextboard, dtype=np.int8), p1_reward, done, exp
 
     def step_player(self, action, player, board_state):
         # do valid checking and calc resulting board state for each move taken
@@ -84,7 +90,7 @@ class OthelloEnv(gym.Env):
             invalid = False
             nextboard = npBoard.set_piece_index(action, 1, board_state)
 
-        return nextboard, done, invalid
+        return nextboard, done, invalid, action
 
     def calc_winner(self, nextboard):
         '''
@@ -208,10 +214,14 @@ def sim(player1='random',
         while not done:
             temp += reward
             action = Player1.get_action(obs)
-            obs_next, reward, done, _ = env.step(action, obs)
+            obs_next, reward, done, exp = env.step(action, obs)
+
+            if player2 == 'qagent' and not exp == None:
+                memory.push(exp)
 
             if player1 == 'qagent':
-                memory.push(Experience(state=torch.tensor(obs.astype(np.float32)).unsqueeze(0), action=torch.tensor(np.array([action]).astype(np.int64)),
+                memory.push(Experience(state=torch.tensor(obs.astype(np.float32)).unsqueeze(0),
+                                       action=torch.tensor(np.array([action]).astype(np.int64)),
                                        next_state=torch.tensor(obs_next.astype(np.float32)).unsqueeze(0),
                                        reward=torch.tensor(np.array([reward]).astype(np.float32))))
                 if memory.can_sample(batch_size):
@@ -256,5 +266,5 @@ def sim(player1='random',
 if __name__ == "__main__":
     sim(player1='qagent',
         player2='qagent',
-        sim_rounds=1000,
+        sim_rounds=10000,
         render=False)

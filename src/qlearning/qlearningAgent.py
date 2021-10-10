@@ -52,6 +52,7 @@ class Qagent():
         self.optimizer = optim.Adam(params=self.ALPHA_policy_network.parameters(), lr=lr)
 
     def save_model(self):
+        print("saving model to model file")
         torch.save(self.BETA_policy_network.state_dict(), 'model')
 
     def update_target_net(self):
