@@ -102,8 +102,8 @@ class OthelloEnv(gym.Env):
         '''
         ourLegalMoves = len(npBoard.getLegalmoves(1, nextBoard))
         theirLegalMoves = len(npBoard.getLegalmoves(-1, nextBoard))
-        score = self.steps * 2 + ourLegalMoves + (-1 * theirLegalMoves)*2
-        score += np.sum(nextBoard) * 0.5
+        score = self.steps * -2 + -2 * theirLegalMoves
+        score += np.sum(nextBoard) * 0.25
         spotWeights = np.array([4, -3, 2, 2, 2, 2, -3, 4,
                                 -3, -4, -1, -1, -1, -1, -4, -3,
                                 2, -1, 1, 0, 0, 1, -1, 2,
@@ -139,7 +139,7 @@ def createAgent(policy_type='random',
                 search_depth=1,
                 eps_start=1,
                 eps_end=0.01,
-                decay=0.0005,
+                decay=0.001,
                 lr=0.001):
     '''
     Agent factory to help deploy different algos for training and analysis
@@ -154,7 +154,7 @@ def createAgent(policy_type='random',
         policy = miniMaxSubOrecess_agent(search_depth=search_depth)
     elif policy_type == 'qagent':
         policy = Qagent(strategy=EpsilonGreedyStrategy(eps_start, eps_end, decay), num_actions=64,
-                        policy_network=DQN(4, 1, 1), lr=lr)
+                        policy_network=DQN(4, 1, 1), lr=lr, load=True)
     else:
         print("yo tf you doing broski")
     return policy
@@ -184,10 +184,12 @@ def sim(player1='random',
     Player1 = createAgent(policy_type=player1,
                           rand_seed=rand_seed,
                           search_depth=search_depth)
-
-    Player2 = createAgent(policy_type=player2,
-                          rand_seed=rand_seed,
-                          search_depth=search_depth)
+    if player1 == "qagent" and player2 == "qagent":
+        Player2 = Player1
+    else:
+        Player2 = createAgent(policy_type=player2,
+                              rand_seed=rand_seed,
+                              search_depth=search_depth)
 
     env = OthelloEnv(Player1, Player2)
 
@@ -199,13 +201,15 @@ def sim(player1='random',
         print('episode {}'.format(i))
         obs = env.reset()
         temp = 0
+        reward = 0
         if render:
             env.render(obs)
         done = False
         while not done:
+            temp += reward
             action = Player1.get_action(obs)
             obs_next, reward, done, _ = env.step(action, obs)
-            temp += reward
+
             if player1 == 'qagent':
                 memory.push(Experience(state=torch.tensor(obs.astype(np.float32)).unsqueeze(0), action=torch.tensor(np.array([action]).astype(np.int64)),
                                        next_state=torch.tensor(obs_next.astype(np.float32)).unsqueeze(0),
@@ -218,10 +222,9 @@ def sim(player1='random',
 
             if render:
                 env.render(obs)
-
+                rewards.append(temp)
             if done:
                 len_game.append(env.steps)
-                rewards.append(temp)
                 if reward > 0:
                     print("player1 won")
                     wins_p1 += 1
@@ -251,7 +254,7 @@ def sim(player1='random',
 
 
 if __name__ == "__main__":
-    sim(player2='minimax',
-        player1='qagent',
+    sim(player1='qagent',
+        player2='qagent',
         sim_rounds=1000,
         render=False)
