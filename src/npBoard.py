@@ -77,6 +77,7 @@ class npBoard:
         :return: False if illegal move, true otherwise
         """
         if(index == -1):
+            print("failed to get index")
             return board
         row, col = npBoard._get_row_col_from_index(index)
         return npBoard._set_piece(row, col, color, board)
@@ -120,6 +121,7 @@ class npBoard:
 
         # Check for envelopment
         envelop = npBoard._get_enveloped_pieces(row, col, color, copyBoard)
+        indx = row * 8 + col
         for coords in envelop:
             copyBoard[coords[0] * 8 + coords[1]] = color
 
@@ -264,6 +266,9 @@ class npBoard:
 
 
 if __name__ == "__main__":
+    gb = npBoard()
+    print(npBoard.to_str(npBoard.set_piece_index(20, 1, gb.board),[]))
+    '''
     print("GAMEBOARD TESTS")
     gameboard = npBoard()
     p = 1
@@ -281,3 +286,4 @@ if __name__ == "__main__":
         print(npBoard.to_str(gameboard.board, moves))
         print(" ")
         gameboard.board = npBoard.set_piece_index(chosen, p, gameboard.board)
+        '''

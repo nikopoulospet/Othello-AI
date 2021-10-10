@@ -1,10 +1,15 @@
 import gym
+import torch
 from gym import spaces
 import numpy as np
 from npBoard import npBoard
 from Agents.random_agent import random_agent
 from Agents.agent import miniMax_agent
 from Agents.processAgent import miniMaxSubOrecess_agent
+from qlearning.qlearningAgent import Qagent, Experience, ReplayMemory
+from qlearning.strategy import EpsilonGreedyStrategy
+from qlearning.deepQNetwork import DQN, FCN
+from matplotlib import pyplot as plt
 
 class OthelloEnv(gym.Env):
     metadata = {'render.modes': ['human']}
@@ -14,27 +19,29 @@ class OthelloEnv(gym.Env):
                  player2=None):
         super(OthelloEnv, self).__init__()
 
-        #define observation space and action space, arrays of 64 elements for the 64 squares in othello
-        self.observation_space = spaces.Box(low = -1 * np.ones(64), high = np.ones(64), dtype=np.int8)
+        # define observation space and action space, arrays of 64 elements for the 64 squares in othello
+        self.observation_space = spaces.Box(low=-1 * np.ones(64), high=np.ones(64), dtype=np.int8)
         self.action_space = spaces.Discrete(64)
-        self.Board = npBoard()
+        gb = npBoard()
+        self.board = gb.board
 
         self.player1 = player1
         self.player2 = player2
 
+        self.steps = 0
+
         self.max_reward = 999999
 
 
-    def step(self, action):
+    def step(self, action, board):
         '''
         update state: returns an observation, reward, done, and debugging info
         input: action is a discrete value 0-63 that represents the move index
         '''
-        nextboard, done, invalid = self.step_player(action, self.player1, self.Board.board)
-
+        self.steps += 1
+        nextboard, done, invalid = self.step_player(action, self.player1, board)
         if invalid:
-            print("INVALID MOVE ***********")
-            return nextboard, self.max_reward * -1, done, {}
+            return nextboard, self.max_reward * -1, True, {}
         if done:
             return nextboard, self.calc_winner(nextboard), True, {}
 
@@ -45,13 +52,13 @@ class OthelloEnv(gym.Env):
         nextboard *= -1
 
         if invalid:
-            print("INVALID MOVE ***********")
-            return nextboard, self.max_reward, done, {}
+            return nextboard, self.max_reward, True, {}
         if done:
             return nextboard, self.calc_winner(nextboard), True, {}
 
         # evaluate reward based on opponents move
         p1_reward = self.calculate_reward(nextboard)
+        self.board = np.array(nextboard)
         return np.array(nextboard, dtype=np.int8), p1_reward, done, {}
 
     def step_player(self, action, player, board_state):
@@ -59,7 +66,6 @@ class OthelloEnv(gym.Env):
         valid_moves = npBoard.getLegalmoves(1, board_state)
         if not action:
             action = player.get_action(board_state)
-
 
         if valid_moves == []:
             print("no more moves avaliable, tally winner")
@@ -77,7 +83,6 @@ class OthelloEnv(gym.Env):
             done = False
             invalid = False
             nextboard = npBoard.set_piece_index(action, 1, board_state)
-            self.Board.board = nextboard
 
         return nextboard, done, invalid
 
@@ -86,22 +91,19 @@ class OthelloEnv(gym.Env):
         calculates winner and returns appropriate reward
         '''
         sign = np.sum(nextboard)
-        print(sign)
-        return self.max_reward * (sign//abs(sign))
+        if sign == 0:
+            return 0
+
+        return self.max_reward * (sign // abs(sign))
 
     def calculate_reward(self, nextBoard):
         '''
         currently just the eval heuristic from agent.py
         '''
-        #if 64 - np.sum(np.abs(nextBoard)) <= DEPTH_LIMIT * 2:
-        #    return np.sum(nextBoard)
-
         ourLegalMoves = len(npBoard.getLegalmoves(1, nextBoard))
         theirLegalMoves = len(npBoard.getLegalmoves(-1, nextBoard))
-        moveWeight = ourLegalMoves - theirLegalMoves
-
-        discWeight = np.sum(nextBoard)
-
+        score = self.steps * 2 + ourLegalMoves + (-1 * theirLegalMoves)*2
+        score += np.sum(nextBoard) * 0.5
         spotWeights = np.array([4, -3, 2, 2, 2, 2, -3, 4,
                                 -3, -4, -1, -1, -1, -1, -4, -3,
                                 2, -1, 1, 0, 0, 1, -1, 2,
@@ -111,26 +113,34 @@ class OthelloEnv(gym.Env):
                                 -3, -4, -1, -1, -1, -1, -4, -3,
                                 4, -3, 2, 2, 2, 2, -3, 4])
 
-        spotWeight = np.sum(nextBoard*spotWeights)
+        spotWeight = np.sum(nextBoard * spotWeights)
+        score += spotWeight * 0.25
 
-        return discWeight * 0.25 + spotWeight / 40 + moveWeight / 10
+        return score
 
     def reset(self):
         # reset state to normal
-        self.Board = npBoard()
-        return self.Board.board
+        gb = npBoard()
+        self.board = gb.board
+        self.steps = 0
+        return self.board
 
-    def render(self, mode='human'):
+    def render(self, board):
         # print board info
-        print(npBoard.to_str(self.Board.board,[]))
+        print(npBoard.to_str(board, []))
 
     def close(self):
         # close any threads, windows ect
         return
 
+
 def createAgent(policy_type='random',
                 rand_seed=0,
-                search_depth=1):
+                search_depth=1,
+                eps_start=1,
+                eps_end=0.01,
+                decay=0.0005,
+                lr=0.001):
     '''
     Agent factory to help deploy different algos for training and analysis
     '''
@@ -142,21 +152,32 @@ def createAgent(policy_type='random',
         policy = miniMax_agent(search_depth=search_depth, func='disks')
     elif policy_type == 'process':
         policy = miniMaxSubOrecess_agent(search_depth=search_depth)
+    elif policy_type == 'qagent':
+        policy = Qagent(strategy=EpsilonGreedyStrategy(eps_start, eps_end, decay), num_actions=64,
+                        policy_network=DQN(4, 1, 1), lr=lr)
     else:
         print("yo tf you doing broski")
     return policy
 
 
-def sim(player1= 'random',
-        player2= 'random',
-        sim_rounds = 100,
-        search_depth = 2,
-        rand_seed = 0,
-        reward_function = None,
-        render = True):
+def sim(player1='random',
+        player2='random',
+        sim_rounds=100,
+        search_depth=2,
+        rand_seed=0,
+        reward_function=None,
+        render=True):
     '''
     starts the sim for playing two Agents against eachother
     '''
+
+    batch_size = 256
+    gamma = 0.999
+    target_update = 10
+    memory_size = 10000
+    lr = 0.001
+    memory = ReplayMemory(memory_size)
+
     print("PLAYER 1 [RED]: {}".format(player1))
     print("PLAYER 2 [BLUE]: {}".format(player2))
     print("player 1 goes first, othello mapping: red-> white, blue->black")
@@ -168,26 +189,42 @@ def sim(player1= 'random',
                           rand_seed=rand_seed,
                           search_depth=search_depth)
 
-    env = OthelloEnv(Player1,Player2)
+    env = OthelloEnv(Player1, Player2)
 
     wins_p1 = draw = loss_p1 = 0
+    len_game = []
+    rewards = []
+    temp = 0
     for i in range(sim_rounds):
         print('episode {}'.format(i))
         obs = env.reset()
+        temp = 0
         if render:
-            env.render()
+            env.render(obs)
         done = False
         while not done:
             action = Player1.get_action(obs)
-            obs, reward, done, _ = env.step(action)
-            print("p1 reward {}".format(reward))
+            obs_next, reward, done, _ = env.step(action, obs)
+            temp += reward
+            if player1 == 'qagent':
+                memory.push(Experience(state=torch.tensor(obs.astype(np.float32)).unsqueeze(0), action=torch.tensor(np.array([action]).astype(np.int64)),
+                                       next_state=torch.tensor(obs_next.astype(np.float32)).unsqueeze(0),
+                                       reward=torch.tensor(np.array([reward]).astype(np.float32))))
+                if memory.can_sample(batch_size):
+                    experiences = memory.sample(batch_size)
+                    Player1.calculate_loss(experiences)
+
+            obs = obs_next
+
             if render:
-                env.render()
+                env.render(obs)
 
             if done:
+                len_game.append(env.steps)
+                rewards.append(temp)
                 if reward > 0:
                     print("player1 won")
-                    wins_p1 +=1
+                    wins_p1 += 1
                 elif reward == 0:
                     print("tie")
                     draw += 1
@@ -195,14 +232,26 @@ def sim(player1= 'random',
                     print("player2 won")
                     loss_p1 += 1
 
+        if sim_rounds % target_update == 0 and player1 == 'qagent':
+            Player1.update_target_net()
+
+    if player1 == 'qagent':
+        Player1.save_model()
+
+    fig, (ax1, ax2) = plt.subplots(2)
+    ax1.plot(len_game)
+    ax2.plot(rewards)
+    plt.show()
+
     print("overall results")
     print("p1 wins: {}".format(wins_p1))
     print("draw: {}".format(draw))
     print("p2 wins: {}".format(loss_p1))
-    print("win percent of p1 over {} games: {}".format(sim_rounds, wins_p1/sim_rounds))
+    print("win percent of p1 over {} games: {}".format(sim_rounds, wins_p1 / sim_rounds))
+
 
 if __name__ == "__main__":
-    sim(player2='process',
-        player1='minimax',
-        sim_rounds=10,
-        render=True)
+    sim(player2='minimax',
+        player1='qagent',
+        sim_rounds=1000,
+        render=False)
