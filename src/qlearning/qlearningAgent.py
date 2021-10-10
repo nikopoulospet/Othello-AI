@@ -3,7 +3,7 @@ import torch
 from torch import optim
 import torch.nn.functional as F
 from collections import namedtuple
-from random import sample
+from random import sample, choice
 from src.npBoard import npBoard
 import numpy as np
 
@@ -40,7 +40,7 @@ class Qagent():
         self.num_actions = num_actions
         self.gamma = 0.999
 
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
         if load:
             policy_network.load_state_dict(torch.load('old_model'))
@@ -119,14 +119,17 @@ class Qagent():
         rate = self.strategy.get_exploration_rate(self.current_step)
         self.current_step += 1
 
-        if rate > random():
-            return randrange(npBoard.getLegalmoves(1, state))  # random exploration of state space
-        else:
-            with torch.no_grad():
-                state = Qagent.extract_features(np.expand_dims(state, axis=0))
-                state = torch.tensor(state.astype(np.float32))
-                state = state.to(self.device)
-                return np.argmax(self.ALPHA_policy_network(state).cpu()).item()  # exploitation step
+        with torch.no_grad():
+            state = Qagent.extract_features(np.expand_dims(state, axis=0))
+            state = torch.tensor(state.astype(np.float32))
+            state = state.to(self.device)
+            guesses = self.ALPHA_policy_network(state).cpu()
+            move = np.argmax(guesses).item()
+            flatGuesses = guesses.flatten()
+            if rate > 0.75:
+                print(flatGuesses[move])
+                return randrange(0, 64, 1)
+            return  move # exploitation step
 
 
 class QValues():
@@ -134,12 +137,12 @@ class QValues():
     def get_current(policy_net, states, actions):
         states = Qagent.extract_features(states)
         states = torch.tensor(states.astype(np.float32))
-        states = states.to(torch.device("cuda" if torch.cuda.is_available() else "cpu"))
+        states = states.to(torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
         return policy_net(states).cpu().reshape(256, -1).gather(dim=1, index=actions.unsqueeze(-1))
 
     @staticmethod
     def get_next(target_net, next_states):
         states = Qagent.extract_features(next_states)
         states = torch.tensor(states.astype(np.float32))
-        states = states.to(torch.device("cuda" if torch.cuda.is_available() else "cpu"))
+        states = states.to(torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
         return target_net(states).cpu().reshape(256,-1).max(dim=1)[0].detach()

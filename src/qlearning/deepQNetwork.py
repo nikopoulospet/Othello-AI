@@ -6,7 +6,7 @@ import torch
 class DQN(nn.Module):
     def __init__(self, inChannels, kernelSize, stride):
         super().__init__()
-
+        self.softBoi = nn.Softmax2d()
         # Model architecture defined by:
         # https://www.diva-portal.org/smash/get/diva2:1121059/FULLTEXT01.pdf
         # https://arxiv.org/pdf/1711.06583.pdf
