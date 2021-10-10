@@ -9,9 +9,9 @@ from math import floor
 # NOTE: Blue is first place
 
 BOARD_SIZE = 8
-DEPTH_LIMIT = 5
-TIME_LIMIT = 10
-NUM_THREADS = 20
+DEPTH_LIMIT = 6
+TIME_LIMIT = 4
+NUM_THREADS = 15
 TIME_PERCENT = .98  # becoming unstable around .9
 CUT_LOSSES_PERCENT = .99  # becoming unstable around .9
 movesVisited = {}
