@@ -40,15 +40,13 @@ class Qagent():
         self.num_actions = num_actions
         self.gamma = 0.999
 
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        if torch.cuda.is_available():
-            for i in range(20):
-                print("CUDA")
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
         if load:
             policy_network.load_state_dict(torch.load('model'))
 
-        self.ALPHA_policy_network = policy_network.float().to(device)
-        self.BETA_policy_network = policy_network.float().to(device)
+        self.ALPHA_policy_network = policy_network.float().to(self.device)
+        self.BETA_policy_network = policy_network.float().to(self.device)
         self.BETA_policy_network.load_state_dict(self.ALPHA_policy_network.state_dict())
         self.BETA_policy_network.eval()
         self.optimizer = optim.Adam(params=self.ALPHA_policy_network.parameters(), lr=lr)
@@ -127,7 +125,8 @@ class Qagent():
             with torch.no_grad():
                 state = Qagent.extract_features(np.expand_dims(state, axis=0))
                 state = torch.tensor(state.astype(np.float32))
-                return np.argmax(self.ALPHA_policy_network(state)).item()  # exploitation step
+                state = state.to(self.device)
+                return np.argmax(self.ALPHA_policy_network(state).cpu()).item()  # exploitation step
 
 
 class QValues():
@@ -135,10 +134,12 @@ class QValues():
     def get_current(policy_net, states, actions):
         states = Qagent.extract_features(states)
         states = torch.tensor(states.astype(np.float32))
-        return policy_net(states).reshape(256, -1).gather(dim=1, index=actions.unsqueeze(-1))
+        states = states.to(torch.device("cuda" if torch.cuda.is_available() else "cpu"))
+        return policy_net(states).cpu().reshape(256, -1).gather(dim=1, index=actions.unsqueeze(-1))
 
     @staticmethod
     def get_next(target_net, next_states):
         states = Qagent.extract_features(next_states)
         states = torch.tensor(states.astype(np.float32))
-        return target_net(states).reshape(256,-1).max(dim=1)[0].detach()
+        states = states.to(torch.device("cuda" if torch.cuda.is_available() else "cpu"))
+        return target_net(states).cpu().reshape(256,-1).max(dim=1)[0].detach()
