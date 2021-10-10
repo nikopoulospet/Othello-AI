@@ -45,7 +45,7 @@ class Qagent():
             for i in range(20):
                 print("CUDA")
         if load:
-            policy_network.load_state_dict(torch.load('model'))
+            policy_network.load_state_dict(torch.load('old_model'))
 
         self.ALPHA_policy_network = policy_network.float().to(device)
         self.BETA_policy_network = policy_network.float().to(device)
@@ -54,8 +54,8 @@ class Qagent():
         self.optimizer = optim.Adam(params=self.ALPHA_policy_network.parameters(), lr=lr)
 
     def save_model(self):
-        print("saving model to model file")
-        torch.save(self.BETA_policy_network.state_dict(), 'model')
+        print("saving old_model to old_model file")
+        torch.save(self.BETA_policy_network.state_dict(), 'old_model')
 
     def update_target_net(self):
         self.BETA_policy_network.load_state_dict(self.ALPHA_policy_network.state_dict())
@@ -122,7 +122,7 @@ class Qagent():
         self.current_step += 1
 
         if rate > random():
-            return randrange(self.num_actions)  # random exploration of state space
+            return randrange(npBoard.getLegalmoves(1, state))  # random exploration of state space
         else:
             with torch.no_grad():
                 state = Qagent.extract_features(np.expand_dims(state, axis=0))

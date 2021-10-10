@@ -51,17 +51,26 @@ class OthelloEnv(gym.Env):
         nextboard *= -1
         temp = torch.tensor(nextboard.astype(np.float32)).unsqueeze(0)
         nextboard, done, invalid, act = self.step_player(None, self.player2, nextboard)
-        exp = Experience(state=temp,
-                         action=torch.tensor(np.array([action]).astype(np.int64)),
-                         next_state=torch.tensor(nextboard.astype(np.float32)).unsqueeze(0),
-                         reward=torch.tensor(np.array([p2_reward]).astype(np.float32)))
+        temp_next = torch.tensor(nextboard.astype(np.float32)).unsqueeze(0)
         nextboard *= -1
 
         if invalid:
-            return nextboard, self.max_reward, True, exp
+            exp = Experience(state=temp,
+                             action=torch.tensor(np.array([action]).astype(np.int64)),
+                             next_state=temp_next,
+                             reward=torch.tensor(np.array([self.max_reward * -1]).astype(np.float32)))
+            return nextboard, 0, True, exp
         if done:
+            exp = Experience(state=temp,
+                             action=torch.tensor(np.array([action]).astype(np.int64)),
+                             next_state=temp_next,
+                             reward=torch.tensor(np.array([self.calc_winner(nextboard) * -1]).astype(np.float32)))
             return nextboard, self.calc_winner(nextboard), True, exp
 
+        exp = Experience(state=temp,
+                         action=torch.tensor(np.array([action]).astype(np.int64)),
+                         next_state=temp_next,
+                         reward=torch.tensor(np.array([p2_reward * -1]).astype(np.float32)))
         # evaluate reward based on opponents move
         p1_reward = self.calculate_reward(nextboard)
         self.board = np.array(nextboard)
@@ -106,22 +115,8 @@ class OthelloEnv(gym.Env):
         '''
         currently just the eval heuristic from agent.py
         '''
-        ourLegalMoves = len(npBoard.getLegalmoves(1, nextBoard))
         theirLegalMoves = len(npBoard.getLegalmoves(-1, nextBoard))
-        score = self.steps * -2 + -2 * theirLegalMoves
-        score += np.sum(nextBoard) * 0.25
-        spotWeights = np.array([4, -3, 2, 2, 2, 2, -3, 4,
-                                -3, -4, -1, -1, -1, -1, -4, -3,
-                                2, -1, 1, 0, 0, 1, -1, 2,
-                                2, -1, 0, 1, 1, 0, -1, 2,
-                                2, -1, 0, 1, 1, 0, -1, 2,
-                                2, -1, 1, 0, 0, 1, -1, 2,
-                                -3, -4, -1, -1, -1, -1, -4, -3,
-                                4, -3, 2, 2, 2, 2, -3, 4])
-
-        spotWeight = np.sum(nextBoard * spotWeights)
-        score += spotWeight * 0.25
-
+        score = self.steps * -2 + -2 * theirLegalMoves + 1 * np.sum(nextBoard)
         return score
 
     def reset(self):
@@ -232,9 +227,9 @@ def sim(player1='random',
 
             if render:
                 env.render(obs)
-                rewards.append(temp)
             if done:
                 len_game.append(env.steps)
+                rewards.append(temp)
                 if reward > 0:
                     print("player1 won")
                     wins_p1 += 1
