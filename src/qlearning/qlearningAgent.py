@@ -43,7 +43,7 @@ class Qagent():
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         if load:
-            policy_network.load_state_dict(torch.load('old_model'))
+            policy_network.load_state_dict(torch.load('model'))
 
         self.ALPHA_policy_network = policy_network.float().to(self.device)
         self.BETA_policy_network = policy_network.float().to(self.device)
