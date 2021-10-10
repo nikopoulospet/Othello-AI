@@ -41,7 +41,9 @@ class Qagent():
         self.gamma = 0.999
 
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
+        if torch.cuda.is_available():
+            for i in range(20):
+                print("CUDA")
         if load:
             policy_network.load_state_dict(torch.load('model'))
 
@@ -94,7 +96,9 @@ class Qagent():
             layer5[np.where(state == 0)] = 1
             # layer 6 -> all occupied spots
             layer6 = abs(state)
-            temp = np.vstack((layer1, layer2, layer3, layer4, layer5, layer6)).reshape(1, -1, 8, 8)
+            # layer 7 -> bias layer
+            layer7 = np.ones(64)
+            temp = np.vstack((layer1, layer2, layer3, layer4, layer5, layer6, layer7)).reshape(1, -1, 8, 8)
             if not features.any():
                 features = temp
             else:

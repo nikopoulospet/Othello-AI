@@ -160,7 +160,7 @@ def createAgent(policy_type='random',
         policy = miniMaxSubOrecess_agent(search_depth=search_depth)
     elif policy_type == 'qagent':
         policy = Qagent(strategy=EpsilonGreedyStrategy(eps_start, eps_end, decay), num_actions=64,
-                        policy_network=DQN(4, 1, 1), lr=lr, load=True)
+                        policy_network=DQN(4, 1, 1), lr=lr, load=False)
     else:
         print("yo tf you doing broski")
     return policy
@@ -266,5 +266,5 @@ def sim(player1='random',
 if __name__ == "__main__":
     sim(player1='qagent',
         player2='qagent',
-        sim_rounds=10000,
+        sim_rounds=1000,
         render=False)
