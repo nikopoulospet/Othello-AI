@@ -4,7 +4,7 @@ from multiprocessing import Process, Event, Queue, process
 from time import sleep, time_ns
 from enum import Enum
 from numpy.core.numeric import Inf
-
+import random
 # NOTE: Blue is first place
 
 BOARD_SIZE = 8
@@ -438,6 +438,10 @@ def miniMax(gameboard: npBoard, startTime):
             bestMove = data[0]
             bestHur = data[1]
     print("P: Playing move")
+    if bestMove == -1:
+        print(outputTemp)
+        print(legalMoves)
+        bestMove = random.choice(legalMoves)
     return bestMove
 
 def checkIfAllDone(numActiveProcesses:int):

@@ -6,16 +6,15 @@ from time import sleep, time_ns
 from enum import Enum
 from numpy.core.numeric import Inf
 from math import floor
-from qlearning.deepQNetwork import DQN, FCN
 import torch.nn as nn
 import torch.nn.functional as F
-
+import random
 # NOTE: Blue is first place
 
 BOARD_SIZE = 8
-DEPTH_LIMIT = 6
-TIME_LIMIT = 4
-NUM_THREADS = 15
+DEPTH_LIMIT = 4
+TIME_LIMIT = 10
+NUM_THREADS = 20
 TIME_PERCENT = .98  # becoming unstable around .9
 CUT_LOSSES_PERCENT = .99  # becoming unstable around .9
 movesVisited = {}
@@ -443,7 +442,12 @@ def miniMax(gameboard: npBoard, startTime):
         if (data[1] > bestHur) and (not data[1] == Inf) and data[0] in legalMoves:
             bestMove = data[0]
             bestHur = data[1]
+
     print("O: Playing move")
+    if bestMove == -1:
+        print(outputTemp)
+        print(legalMoves)
+        bestMove = random.choice(legalMoves)
     return bestMove
 
 def checkIfAllDone(numActiveProcesses:int):
@@ -515,7 +519,6 @@ def findMax(gameboardArray, alpha, beta, currDepth, depthLimit, stop_event, orde
 
     # check moves
     # orderedMoves = orderMoves(gameboardArray, legalMoves, -1)
-    move = orderWithPolicy(gameboardArray, legalMoves, -1, ordering_policy)
     for move in legalMoves:
         # check if time is up and return if it is
         if stop_event.is_set():
@@ -566,7 +569,8 @@ def findMin(gameboardArray, alpha, beta, currDepth, depthLimit, stop_event, orde
 
     # explore the opontents counter moves to the one we were thinking of making
     # orderedMoves = orderMoves(gameboardArray, legalMoves, -1)
-    move = orderWithPolicy(gameboardArray, legalMoves, -1, ordering_policy)
+    if currDepth == 0:
+        move = orderWithPolicy(gameboardArray, legalMoves, -1, ordering_policy)
     for move in legalMoves:
         # check if time is up
         if stop_event.is_set():
