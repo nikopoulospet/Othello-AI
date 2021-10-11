@@ -5,8 +5,8 @@ from npBoard import npBoard
 from Agents.random_agent import random_agent
 from Agents.agent import miniMax_agent
 from Agents.moistSalamander import miniMax_agent
-from Agents.processAgent import miniMaxSubOrecess_agent
-from Agents.orderedProcessAgent import orderedProcess_Agent
+from src.Referee.processAgent import miniMaxSubOrecess_agent
+from src.Referee.orderedProcessAgent import orderedProcess_Agent
 
 class OthelloEnv(gym.Env):
     metadata = {'render.modes': ['human']}

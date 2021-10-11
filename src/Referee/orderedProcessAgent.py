@@ -1,19 +1,20 @@
 import os.path
+import random
+
 import numpy as np
 from multiprocessing import Process, Event, Queue
 from time import sleep, time_ns
 from enum import Enum
-from numpy.core.numeric import Inf
 from math import floor
 
 # NOTE: Blue is first place
 
 BOARD_SIZE = 8
-DEPTH_LIMIT = 6
+DEPTH_LIMIT = 10
 TIME_LIMIT = 4
-NUM_THREADS = 15
-TIME_PERCENT = .98  # becoming unstable around .9
-CUT_LOSSES_PERCENT = .99  # becoming unstable around .9
+NUM_THREADS = 20
+TIME_PERCENT = .98
+CUT_LOSSES_PERCENT = .99
 movesVisited = {}
 
 # Event objects used to send signals to threads
@@ -328,10 +329,10 @@ def main():
             threadInGlobal[i], threadOutGlobal[i], stop_event, start_event, kill_thread_event))
         threadsList[i].start()
 
-    while(not gameOver):
+    while not gameOver:
 
         # if game is over end subprocesses and quit
-        if(os.path.isfile('end_game')):
+        if os.path.isfile('end_game'):
             print('GG')
             kill_thread_event.set()
             stop_event.set()
@@ -343,7 +344,7 @@ def main():
             continue
 
         # if not my turn break
-        if(not os.path.isfile('agentOrder.go')):
+        if not os.path.isfile('agentOrder.go'):
             continue
 
         t1_start = time_ns()
@@ -364,7 +365,7 @@ def main():
             # Tokenize move
             tokens = line.split()
             player = tokens[0]
-            if(player == "agentOrder"):
+            if player == "agentOrder":
                 continue
             col = tokens[1]
             row = tokens[2]
@@ -434,9 +435,13 @@ def miniMax(gameboard: npBoard, startTime):
     bestMove = -1
     bestHur = -99999
     for data in outputTemp:
-        if (data[1] > bestHur) and (not data[1] == Inf) and data[0] in legalMoves:
+        if (data[1] > bestHur) and (not data[1] == np.Inf) and data[0] in legalMoves:
             bestMove = data[0]
             bestHur = data[1]
+    if bestMove == -1:
+        print(outputTemp)
+        print(legalMoves)
+        bestMove = random.choice(legalMoves)
     print("O: Playing move")
     return bestMove
 

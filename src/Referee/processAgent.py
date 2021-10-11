@@ -1,14 +1,15 @@
 import os.path
+import random
+
 import numpy as np
 from multiprocessing import Process, Event, Queue, process
 from time import sleep, time_ns
 from enum import Enum
-from numpy.core.numeric import Inf
 
 # NOTE: Blue is first place
 
 BOARD_SIZE = 8
-DEPTH_LIMIT = 4
+DEPTH_LIMIT = 6
 TIME_LIMIT = 10
 NUM_THREADS = 20
 TIME_PERCENT = .98  # becoming unstable around .9
@@ -434,9 +435,13 @@ def miniMax(gameboard: npBoard, startTime):
     bestMove = -1
     bestHur = -99999
     for data in outputTemp:
-        if (data[1] > bestHur) and (not data[1] == Inf) and data[0] in legalMoves:
+        if (data[1] > bestHur) and (not data[1] == np.Inf) and data[0] in legalMoves:
             bestMove = data[0]
             bestHur = data[1]
+    if bestMove == -1:
+        print(outputTemp)
+        print(legalMoves)
+        bestMove = random.choice(legalMoves)
     print("P: Playing move")
     return bestMove
 
