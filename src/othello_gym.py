@@ -271,17 +271,6 @@ def sim(player1='random',
     file.write(str(search_depth) + " " + str(wins_p1/sim_rounds))
     file.close()
 
-        if sim_rounds % target_update == 0 and player1 == 'qagent':
-            Player1.update_target_net()
-
-    if player1 == 'qagent':
-        Player1.save_model()
-
-    fig, (ax1, ax2) = plt.subplots(2)
-    ax1.plot(len_game)
-    ax2.plot(rewards)
-    plt.show()
-
     print("overall results")
     print("p1 wins: {}".format(wins_p1))
     print("draw: {}".format(draw))
@@ -290,7 +279,7 @@ def sim(player1='random',
 
 
 if __name__ == "__main__":
-    sim(player1='qagent',
-        player2='qagent',
-        sim_rounds=1000,
+    sim(player1='random',
+        player2='ordered',
+        sim_rounds=10,
         render=False)

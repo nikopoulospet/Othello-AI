@@ -1,10 +1,14 @@
 import os.path
+import torch
 import numpy as np
 from multiprocessing import Process, Event, Queue
 from time import sleep, time_ns
 from enum import Enum
 from numpy.core.numeric import Inf
 from math import floor
+from qlearning.deepQNetwork import DQN, FCN
+import torch.nn as nn
+import torch.nn.functional as F
 
 # NOTE: Blue is first place
 
@@ -281,7 +285,7 @@ class npBoard:
         return out
 
 
-def managedMiniMaxThread(queIN: Queue, queOUT: Queue, stop_event: Event, start_event: Event, kill_thread_event: Event):
+def managedMiniMaxThread(queIN: Queue, queOUT: Queue, stop_event: Event, start_event: Event, kill_thread_event: Event, ordering_policy):
     """
     Function to manage the many subprocesses that are computing minimax
     :param queIN this processes incoming data
@@ -309,7 +313,7 @@ def managedMiniMaxThread(queIN: Queue, queOUT: Queue, stop_event: Event, start_e
                 # make and start miniMax
                 gameboardArray = npBoard.set_piece_index(move, 1, board)
                 temp = findMin(gameboardArray, np.NINF, np.inf,
-                               0, DEPTH_LIMIT, stop_event)
+                               0, DEPTH_LIMIT, stop_event, ordering_policy)
                 # output the data
                 queOUT.put((move, temp))
             else:
@@ -320,12 +324,14 @@ def managedMiniMaxThread(queIN: Queue, queOUT: Queue, stop_event: Event, start_e
 def main():
     gameOver = False
     gameboard = npBoard()
-
+    policy_network = DQN()
+    policy_network.load_state_dict(torch.load('model_2000_run'))
+    policy_network.eval()
     # premake and start subprocesses
     threadsList = [None] * NUM_THREADS
     for i in range(NUM_THREADS):
         threadsList[i] = Process(target=managedMiniMaxThread, args=(
-            threadInGlobal[i], threadOutGlobal[i], stop_event, start_event, kill_thread_event))
+            threadInGlobal[i], threadOutGlobal[i], stop_event, start_event, kill_thread_event, policy_network))
         threadsList[i].start()
 
     while(not gameOver):
@@ -478,7 +484,7 @@ def evaluation(currBoard: npBoard):
     return int((discWeight * 0.25 + spotWeight / 40 + moveWeight / 10) * 100)
 
 
-def findMax(gameboardArray, alpha, beta, currDepth, depthLimit, stop_event):
+def findMax(gameboardArray, alpha, beta, currDepth, depthLimit, stop_event, ordering_policy):
     """
     Maximize level of alphg-beta pruning
     :param gameboardArray is the gameboard
@@ -509,6 +515,7 @@ def findMax(gameboardArray, alpha, beta, currDepth, depthLimit, stop_event):
 
     # check moves
     # orderedMoves = orderMoves(gameboardArray, legalMoves, -1)
+    move = orderWithPolicy(gameboardArray, legalMoves, -1, ordering_policy)
     for move in legalMoves:
         # check if time is up and return if it is
         if stop_event.is_set():
@@ -516,7 +523,7 @@ def findMax(gameboardArray, alpha, beta, currDepth, depthLimit, stop_event):
 
         # do min layers
         currMax = max(currMax, findMin(
-            npBoard.set_piece_index(move, 1, gameboardArray), alpha, beta, currDepth+1, depthLimit, stop_event))
+            npBoard.set_piece_index(move, 1, gameboardArray), alpha, beta, currDepth+1, depthLimit, stop_event, ordering_policy))
 
         # do pruning
         if currMax >= beta:
@@ -528,7 +535,7 @@ def findMax(gameboardArray, alpha, beta, currDepth, depthLimit, stop_event):
     return currMax
 
 
-def findMin(gameboardArray, alpha, beta, currDepth, depthLimit, stop_event):
+def findMin(gameboardArray, alpha, beta, currDepth, depthLimit, stop_event, ordering_policy):
     """
     Minimize level of alphg-beta pruning
     :param gameboardArray is the gameboard
@@ -559,6 +566,7 @@ def findMin(gameboardArray, alpha, beta, currDepth, depthLimit, stop_event):
 
     # explore the opontents counter moves to the one we were thinking of making
     # orderedMoves = orderMoves(gameboardArray, legalMoves, -1)
+    move = orderWithPolicy(gameboardArray, legalMoves, -1, ordering_policy)
     for move in legalMoves:
         # check if time is up
         if stop_event.is_set():
@@ -566,7 +574,7 @@ def findMin(gameboardArray, alpha, beta, currDepth, depthLimit, stop_event):
 
         # do max layers
         currMin = min(currMin, findMax(
-            npBoard.set_piece_index(move, -1, gameboardArray), alpha, beta, currDepth+1, depthLimit, stop_event))
+            npBoard.set_piece_index(move, -1, gameboardArray), alpha, beta, currDepth+1, depthLimit, stop_event, ordering_policy))
 
         # do pruning
         if currMin <= alpha:
@@ -575,6 +583,52 @@ def findMin(gameboardArray, alpha, beta, currDepth, depthLimit, stop_event):
         beta = min(beta, currMin)
     # clean return
     return currMin
+
+def orderWithPolicy(gameboard, moves, color, ordering_policy):
+    '''
+    orders moves according to policy network
+    '''
+    if len(moves) <= 1:
+        return moves
+    gameboard *= color
+    state = extract_features(np.expand_dims(gameboard, axis=0))
+    state = torch.tensor(state.astype(np.float32))
+    return list(np.array(moves)[ordering_policy(state).reshape(64)[moves].sort()[1].tolist()])
+
+
+def extract_features(states):
+    '''
+    extract feature boards from state
+    n different feature boards -> (n,64) = new state vector output
+    '''
+    features = np.array([])
+    for i in range(states.shape[0]):
+        state = states[i, :]
+        # layer 1 -> p1 pieces
+        layer1 = np.zeros(64)
+        layer1[np.where(state == 1)] = 1
+        # layer 2 -> p2 pieces
+        layer2 = np.zeros(64)
+        layer2[np.where(state == -1)] = 1
+        # layer 3 -> p1 valid moves
+        layer3 = np.zeros(64)
+        layer3[npBoard.getLegalmoves(1, state)] = 1
+        # layer 4 -> p2 valid moves
+        layer4 = np.zeros(64)
+        layer4[npBoard.getLegalmoves(-1, state)] = 1
+        # layer 5 -> all empty spots
+        layer5 = np.zeros(64)
+        layer5[np.where(state == 0)] = 1
+        # layer 6 -> all occupied spots
+        layer6 = abs(state)
+        # layer 7 -> bias layer
+        layer7 = np.ones(64)
+        temp = np.vstack((layer1, layer2, layer3, layer4, layer5, layer6, layer7)).reshape(1, -1, 8, 8)
+        if not features.any():
+            features = temp
+        else:
+            features = np.vstack((features, temp))
+    return features
 
 
 def orderMoves(gameboardArray, moves: list, color: int):
@@ -602,6 +656,39 @@ def orderMoves(gameboardArray, moves: list, color: int):
     return ordered[:floor(len(ordered)/2)]
 
 
+class DQN(nn.Module):
+    def __init__(self, inChannels=6, kernelSize=1, stride=1):
+        super().__init__()
+        self.softBoi = nn.Softmax2d()
+        # Model architecture defined by:
+        # https://www.diva-portal.org/smash/get/diva2:1121059/FULLTEXT01.pdf
+        # https://arxiv.org/pdf/1711.06583.pdf
+        self.conv1 = nn.Conv2d(in_channels=7, out_channels=60, kernel_size=kernelSize, stride=stride)
+        self.conv2 = nn.Conv2d(in_channels=60, out_channels=60, kernel_size=kernelSize, stride=stride)
+        self.conv3 = nn.Conv2d(in_channels=60, out_channels=60, kernel_size=kernelSize, stride=stride)
+        self.conv4 = nn.Conv2d(in_channels=60, out_channels=60, kernel_size=kernelSize, stride=stride)
+        self.conv5 = nn.Conv2d(in_channels=60, out_channels=60, kernel_size=kernelSize, stride=stride)
+        self.conv6 = nn.Conv2d(in_channels=60, out_channels=60, kernel_size=kernelSize, stride=stride)
+        self.conv7 = nn.Conv2d(in_channels=60, out_channels=60, kernel_size=kernelSize, stride=stride)
+        self.conv8 = nn.Conv2d(in_channels=60, out_channels=60, kernel_size=kernelSize, stride=stride)
+        self.conv9 = nn.Conv2d(in_channels=60, out_channels=60, kernel_size=kernelSize, stride=stride)
+        self.conv10 = nn.Conv2d(in_channels=60, out_channels=60, kernel_size=kernelSize, stride=stride)
+        self.out = nn.Conv2d(in_channels=60, out_channels=1, kernel_size=kernelSize, stride=stride)
+
+    def forward(self, t):
+        t = F.relu(self.conv1(t))
+        t = F.relu(self.conv2(t))
+        t = F.relu(self.conv3(t))
+        t = F.relu(self.conv4(t))
+        t = F.relu(self.conv5(t))
+        t = F.relu(self.conv6(t))
+        t = F.relu(self.conv7(t))
+        t = F.relu(self.conv8(t))
+        t = F.relu(self.conv9(t))
+        t = F.relu(self.conv10(t))
+        t = self.out(t)
+        return t
+
 """
 minimax agent wrapper class to use in the gym enviroment. 
 Must impliment action = get_action(board) to make steps in gym
@@ -616,8 +703,11 @@ class orderedProcess_Agent():
         global DEPTH_LIMIT
         DEPTH_LIMIT = search_depth
         self.threadsList = [None] * NUM_THREADS
+        policy_network = DQN()
+        policy_network.load_state_dict(torch.load('model_2000_run'))
+        policy_network.eval()
         for i in range(NUM_THREADS):
-            self.threadsList[i] = Process(target=managedMiniMaxThread, args=(threadInGlobal[i], threadOutGlobal[i],stop_event,start_event,kill_thread_event))
+            self.threadsList[i] = Process(target=managedMiniMaxThread, args=(threadInGlobal[i], threadOutGlobal[i],stop_event,start_event,kill_thread_event, policy_network))
             self.threadsList[i].start()
 
     def get_action(self, observation: np.array([])):
