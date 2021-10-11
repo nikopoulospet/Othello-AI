@@ -12,7 +12,7 @@ BOARD_SIZE = 8
 DEPTH_LIMIT = 6
 TIME_LIMIT = 10
 NUM_THREADS = 20
-TIME_PERCENT = .98  # becoming unstable around .9
+TIME_PERCENT = .97  # becoming unstable around .9
 CUT_LOSSES_PERCENT = .99  # becoming unstable around .9
 movesVisited = {}
 

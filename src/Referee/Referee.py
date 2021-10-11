@@ -66,7 +66,7 @@ def main():
     # Select order randomly
     p1 = args.player_one
     p2 = args.player_two
-    if random.choice([False]):
+    if random.choice([True]):
         # Swap p1 and p2
         p3 = p1
         p1 = p2
