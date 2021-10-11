@@ -1,15 +1,15 @@
 import numpy as np
-from npBoard import npBoard
 import random
 """
 random agent class, generate moves and pick a random move
 used for benchmarking
 """
 
+
 class random_agent():
-    def __init__(self,rand_seed=0):
+    def __init__(self, rand_seed=0):
         self.board = npBoard()
-        self.rand_seed=rand_seed
+        self.rand_seed = rand_seed
 
     def get_action(self, observation: np.array([])):
         '''

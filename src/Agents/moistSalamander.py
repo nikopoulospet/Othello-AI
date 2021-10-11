@@ -1,14 +1,16 @@
 from enum import Enum
 import os.path
 import numpy as np
-from time import process_time_ns, sleep
+from time import process_time_ns
+from math import floor
 
 # NOTE: Blue is first place
 
 BOARD_SIZE = 8
-DEPTH_LIMIT = 3
+DEPTH_LIMIT = 2
 time_limit = 1000
 movesVisited = {}
+skipped = 0
 
 BOARD_SIZE = 8
 
@@ -277,6 +279,9 @@ def main():
         # if game is over break
         if(os.path.isfile('end_game')):
             gameOver = True
+            print("Total possible moves:", len(movesVisited) + skipped)
+            print("Moves visited:", len(movesVisited))
+            print("Moves skipped:", skipped)
             continue
 
         # if not my turn break
@@ -313,6 +318,7 @@ def main():
         bestMove = miniMax(gameboard)
 
         # make move on the board
+        # print("Best move index: ", bestMove)
         gameboard.board = npBoard.set_piece_index(bestMove, 1, gameboard.board)
 
         # send move
@@ -361,7 +367,7 @@ def evaluation(currBoard: npBoard):
     :return the evaluation score of the board currently from our POV
     """
 
-    if 64 - np.sum(np.abs(currBoard)) <= DEPTH_LIMIT * 2:
+    if 64 - np.sum(np.abs(currBoard)) <= 14:
         return np.sum(currBoard)
 
     # weight between our legal moves and theirs, more legal moves is better
@@ -384,7 +390,7 @@ def evaluation(currBoard: npBoard):
 
     spotWeight = np.sum(currBoard*spotWeights)
 
-    return discWeight * 0.25 + spotWeight / 40 + moveWeight / 10
+    return int(discWeight * 0.25 + spotWeight / 40 + moveWeight / 10)
 
 
 def findMax(gameboardArray, alpha, beta, currDepth, depthLimit):
@@ -409,7 +415,14 @@ def findMax(gameboardArray, alpha, beta, currDepth, depthLimit):
     # return if legalMoves is empty
     if not legalMoves:
         return evaluation(gameboardArray)
-    for move in legalMoves:
+    orderedMoves = orderMoves(gameboardArray, legalMoves, 1)
+    for move, heur in orderedMoves:
+        # if str(gameboardArray) in movesVisited:
+        #     global skipped
+        #     skipped += 1
+        #     continue
+        # # print("Hashed gameboard: ", gameboardArray.__hash__)
+        # movesVisited[str(gameboardArray)] = move
         currMax = max(currMax, findMin(
             npBoard.set_piece_index(move, 1, gameboardArray), alpha, beta, currDepth+1, depthLimit))
         if currMax >= beta:  # prune
@@ -440,13 +453,45 @@ def findMin(gameboardArray, alpha, beta, currDepth, depthLimit):
     if not legalMoves:
         return evaluation(gameboardArray)
     # explore the opontents counter moves to the one we were thinking of making
-    for move in legalMoves:
+    orderedMoves = orderMoves(gameboardArray, legalMoves, -1)
+    for move, heur in orderedMoves:
+        # if str(gameboardArray) in movesVisited:
+        #     global skipped
+        #     skipped += 1
+        #     # TODO : deter best heuristic here?
+        #     continue
+        # movesVisited[str(gameboardArray)] = move
         currMin = min(currMin, findMax(
             npBoard.set_piece_index(move, -1, gameboardArray), alpha, beta, currDepth+1, depthLimit))
         if currMin <= alpha:  # prune
             return currMin
         beta = min(beta, currMin)  # update beta
     return currMin
+
+
+def orderMoves(gameboardArray, moves: list, color: int):
+    """
+    Order the moves before pruning
+    :param gameboardArray is the gameboard
+    :param moves is the moves to be ordered
+    """
+    ordered = []
+    if len(moves) == 1:
+        ordered.append(
+            (moves[0], evaluation(npBoard.set_piece_index(moves[0], color, gameboardArray))))
+        return ordered
+    for move in moves:
+        # create array of tuple : index, heuristic
+        ordered.append(
+            (move, evaluation(npBoard.set_piece_index(move, color, gameboardArray))))
+    # sort by best heuristic value
+    if color == 1:
+        # maximized
+        ordered.sort(key=lambda move: move[1], reverse=True)
+    else:
+        # minimized
+        ordered.sort(key=lambda move: move[1], reverse=False)
+    return ordered[:floor(len(ordered)/2)]
 
 
 """

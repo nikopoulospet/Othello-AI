@@ -3,18 +3,15 @@ import numpy as np
 from threading import Thread, Event
 from time import sleep, process_time_ns, time_ns
 from enum import Enum
-from numpy.core.numeric import Inf
 
 from numpy.core.records import array
 
 # NOTE: Blue is first place
 
 BOARD_SIZE = 8
-DEPTH_LIMIT = 5
-TIME_LIMIT = 10
+DEPTH_LIMIT = 4
+TIME_LIMIT = 9
 NUM_THREADS = 20
-TIME_PERCENT = .85 # becoming unstable around .9
-CUT_LOSSES_PERCENT = .95 # becoming unstable around .9
 movesVisited = {}
 
 # Event objects used to send signals to threads
@@ -26,6 +23,8 @@ kill_thread_event = Event()
 threadInGlobal = [None] * NUM_THREADS
 threadOutGlobal = [None] * NUM_THREADS
 threadFlagsGlobal = [None] * NUM_THREADS
+
+
 class Direction(Enum):
     """
     Enum of possible directions on an Othello board
@@ -38,6 +37,7 @@ class Direction(Enum):
     DOWN_RIGHT = (1, 1)
     LEFT = (0, -1)
     RIGHT = (0, 1)
+
 
 class npBoard:
     """
@@ -280,25 +280,25 @@ class npBoard:
         out += "   A  B  C  D  E  F  G  H"
         return out
 
+
 def managedMiniMaxThread(index):
     global threadInGlobal, threadOutGlobal, threadFlagsGlobal
     while not kill_thread_event.is_set():
-        if not start_event.is_set():
+        while not start_event.is_set():
             threadFlagsGlobal[index] = 1
             threadOutGlobal[index] = None
-            sleep(0.2)
+            sleep(0.0001)
+        if threadInGlobal[index] and threadFlagsGlobal[index] == 1:
+            move = threadInGlobal[index][0]
+            board = threadInGlobal[index][1]
+            gameboardArray = npBoard.set_piece_index(move, 1, board)
+            temp = findMin(gameboardArray, np.NINF,
+                           np.inf, 0, DEPTH_LIMIT, index)
+            threadOutGlobal[index] = temp
+            threadFlagsGlobal[index] = 0
         else:
-            if threadInGlobal[index] and threadFlagsGlobal[index] == 1:
-                threadFlagsGlobal[index] = 1
-                move = threadInGlobal[index][0]
-                board = threadInGlobal[index][1]
-                gameboardArray = npBoard.set_piece_index(move, 1, board)
-                temp = findMin(gameboardArray, np.NINF, np.inf, 0, DEPTH_LIMIT, index)
-                threadOutGlobal[index] = temp
-                threadFlagsGlobal[index] = 0
-            else:
-                threadFlagsGlobal[index] = 0
-                sleep(0.2)
+            threadFlagsGlobal[index] = 0
+
 
 def main():
     gameOver = False
@@ -313,7 +313,6 @@ def main():
         # if game is over break
         if(os.path.isfile('end_game')):
             kill_thread_event.set()
-            stop_event.set()
             for i in range(NUM_THREADS):
                 threadsList[i].join()
             gameOver = True
@@ -353,19 +352,13 @@ def main():
         # move making logic
         bestMove = miniMax(gameboard, t1_start)
         bestMoveString = npBoard.writeCoords(bestMove)
+        print("Prefilewrite: " + str((time_ns() - t1_start)/1000000000))
         # send move
-        print("PREWRITE TIME: " + str((time_ns() - t1_start)/1000000000))
         file = open('move_file', 'w')
         file.write("agent" + bestMoveString)
         file.close()
         print("TOTAL TIME: " + str((time_ns() - t1_start)/1000000000))
-        print("Played the move: " + bestMoveString + "\n")
-        global threadFlagsGlobal, threadOutGlobal, threadInGlobal
-        threadFlagsGlobal = [1] * NUM_THREADS
-        threadOutGlobal = [None] * NUM_THREADS
-        threadInGlobal = [None] * NUM_THREADS
-        stop_event.clear()
-        start_event.clear()
+
         # make move on the board
         gameboard.board = npBoard.set_piece_index(bestMove, 1, gameboard.board)
 
@@ -385,6 +378,9 @@ def miniMax(gameboard: npBoard, startTime):
         return -1
 
     # multithreading variables
+    stop_event.clear()
+    start_event.clear()
+
     global threadInGlobal
     global threadOutGlobal
     global threadFlagsGlobal
@@ -395,24 +391,18 @@ def miniMax(gameboard: npBoard, startTime):
         threadInGlobal[moveIndex] = (legalMoves[moveIndex], gameboard.board)
     start_event.set()
     # wait till %90 of the time limit has passed
-    eventTime = int(((TIME_LIMIT* TIME_PERCENT) * 1000000000) + startTime)
-    abortTime = int(((TIME_LIMIT* CUT_LOSSES_PERCENT) * 1000000000) + startTime)
+    timeLeft = (TIME_LIMIT * .85) - ((time_ns() - startTime)/1000000000)
+    print("PreSleep: " + str(((time_ns() - startTime)/1000000000)))
+    sleep(timeLeft)
     # tell all threads to stop
-    while(np.sum(threadFlagsGlobal) and time_ns() < abortTime):
-        if(time_ns() >= eventTime and not stop_event.is_set()):
-            stop_event.set()
-            print("I COMMAND YALL TO STOP")
-    print("AFTER END CALL TIME: " + str((time_ns() - startTime)/1000000000))
-    sleep(0.1)
-    start_event.clear()
-    outputTemp = list(threadOutGlobal)
-    bestHeuristic = max([-9999999 if v is None else v for v in outputTemp])
-    # print("\t" + str(bestHeuristic))
-    # print("\t" + str(outputTemp))
-    # print("\t" + str(legalMoves))
-    print("AFTER ARRAY LOOKING TIME: " + str((time_ns() - startTime)/1000000000))
+    print("PreEvent: " + str(((time_ns() - startTime)/1000000000)))
+    stop_event.set()
+    # while(np.sum(threadFlagsGlobal)):
+    #     pass
+    bestHeuristic = max([i for i in threadOutGlobal if i])
     # return bestMove index
-    return legalMoves[outputTemp.index(bestHeuristic)]
+    print("PreReturn: " + str(((time_ns() - startTime)/1000000000)))
+    return legalMoves[threadOutGlobal.index(bestHeuristic)]
 
 
 def evaluation(currBoard: npBoard):
@@ -444,7 +434,7 @@ def evaluation(currBoard: npBoard):
 
     spotWeight = np.sum(currBoard*spotWeights)
 
-    return int((discWeight * 0.25 + spotWeight / 40 + moveWeight / 10) * 100)
+    return discWeight * 0.25 + spotWeight / 40 + moveWeight / 10
 
 
 def findMax(gameboardArray, alpha, beta, currDepth, depthLimit, index):
@@ -462,6 +452,7 @@ def findMax(gameboardArray, alpha, beta, currDepth, depthLimit, index):
 
     # if we should be stopped
     if stop_event.is_set():
+        print("ILL STOP FINE")
         return np.NINF
 
     # worst case
@@ -473,22 +464,23 @@ def findMax(gameboardArray, alpha, beta, currDepth, depthLimit, index):
     # return if legalMoves is empty
     if not legalMoves:
         return evaluation(gameboardArray)
-    
+
     # check moves
     for move in legalMoves:
         # check if time is up and return if it is
         if stop_event.is_set():
+            print("ILL STOP FINE")
             return currMax
 
-        #do min layers
+        # do min layers
         currMax = max(currMax, findMin(
             npBoard.set_piece_index(move, 1, gameboardArray), alpha, beta, currDepth+1, depthLimit, index))
 
         # do pruning
-        if currMax >= beta:  
+        if currMax >= beta:
             return currMax
 
-        # update alpha    
+        # update alpha
         alpha = max(alpha, currMax)
     # clean return
     return currMax
@@ -511,6 +503,7 @@ def findMin(gameboardArray, alpha, beta, currDepth, depthLimit, index):
 
     # if we should be stopped
     if stop_event.is_set():
+        print("ILL STOP FINE")
         return np.inf
 
     # worst case
@@ -519,7 +512,7 @@ def findMin(gameboardArray, alpha, beta, currDepth, depthLimit, index):
     # see legal moves on min layer (opponent)
     legalMoves = npBoard.getLegalmoves(-1, gameboardArray)
 
-    #if there is no more moves
+    # if there is no more moves
     if not legalMoves:
         return evaluation(gameboardArray)
 
@@ -528,22 +521,25 @@ def findMin(gameboardArray, alpha, beta, currDepth, depthLimit, index):
 
         # check if time is up
         if stop_event.is_set():
+            print("ILL STOP FINE")
             return currMin
 
-        #do max layers
+        # do max layers
         currMin = min(currMin, findMax(
             npBoard.set_piece_index(move, -1, gameboardArray), alpha, beta, currDepth+1, depthLimit, index))
 
         # do pruning
-        if currMin <= alpha:  
+        if currMin <= alpha:
             return currMin
 
         if currDepth == 0:
             threadOutGlobal[index] = currMin
+            print("Thread: " + str(index) + " WRITE")
         # update beta
-        beta = min(beta, currMin)  
+        beta = min(beta, currMin)
     # clean return
     return currMin
+
 
 """
 minimax agent wrapper class to use in the gym enviroment. 

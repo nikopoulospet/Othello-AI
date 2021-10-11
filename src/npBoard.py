@@ -283,7 +283,7 @@ if __name__ == "__main__":
         print("Player {} has chosen this move {}".format(p, chosen))
         print("all possible moves: {}".format(
             [npBoard.getCoordsFromIndex(i) for i in moves]))
-        print(npBoard.to_str(gameboard.board, moves))
+        # print(npBoard.to_str(gameboard.board, moves))
         print(" ")
         gameboard.board = npBoard.set_piece_index(chosen, p, gameboard.board)
         '''

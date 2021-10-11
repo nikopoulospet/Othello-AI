@@ -11,6 +11,11 @@ from qlearning.strategy import EpsilonGreedyStrategy
 from qlearning.deepQNetwork import DQN, FCN
 from matplotlib import pyplot as plt
 
+from Agents.random_agent import random_agent
+from Agents.agent import miniMax_agent
+from Agents.moistSalamander import miniMax_agent
+from Agents.processAgent import miniMaxSubOrecess_agent
+from Agents.orderedProcessAgent import orderedProcess_Agent
 
 class OthelloEnv(gym.Env):
     metadata = {'render.modes': ['human']}
@@ -141,7 +146,7 @@ class OthelloEnv(gym.Env):
 
 def createAgent(policy_type='random',
                 rand_seed=0,
-                search_depth=1,
+                search_depth=2,
                 eps_start=1,
                 eps_end=0.01,
                 decay=0.0025,
@@ -152,7 +157,7 @@ def createAgent(policy_type='random',
     if policy_type == 'random':
         policy = random_agent(rand_seed=rand_seed)
     elif policy_type == 'minimax':
-        policy = miniMax_agent(search_depth=search_depth, func='norm')
+        policy = miniMax_agent(search_depth=search_depth)
     elif policy_type == 'disks':
         policy = miniMax_agent(search_depth=search_depth, func='disks')
     elif policy_type == 'process':
@@ -160,6 +165,12 @@ def createAgent(policy_type='random',
     elif policy_type == 'qagent':
         policy = Qagent(strategy=EpsilonGreedyStrategy(eps_start, eps_end, decay), num_actions=64,
                         policy_network=DQN(4, 1, 1), lr=lr, load=True)
+    elif policy_type == 'moist':
+        policy = miniMax_agent(search_depth=2)
+    elif policy_type == 'process':
+        policy = miniMaxSubOrecess_agent(search_depth=2)
+    elif policy_type == 'ordered':
+        policy = orderedProcess_Agent(search_depth=search_depth)
     else:
         print("yo tf you doing broski")
     return policy
@@ -235,6 +246,18 @@ def sim(player1='random',
                 env.render(obs)
                 len_game.append(env.steps)
                 rewards.append(temp)
+                env.render()
+
+            if (player1=='process' or player1=='ordered' ):
+                Player1.kill_threads()
+                Player1 = createAgent(policy_type=player1,
+                          rand_seed=rand_seed,
+                          search_depth=search_depth)
+            if (player2=='process' or player2=='ordered' ):
+                Player2.kill_threads()
+                Player2 = createAgent(policy_type=player2,
+                          rand_seed=rand_seed,
+                          search_depth=search_depth)
                 if reward > 0:
                     print("player1 won")
                     wins_p1 += 1
@@ -244,6 +267,9 @@ def sim(player1='random',
                 else:
                     print("player2 won")
                     loss_p1 += 1
+    file = open("gym.log", 'a')
+    file.write(str(search_depth) + " " + str(wins_p1/sim_rounds))
+    file.close()
 
         if sim_rounds % target_update == 0 and player1 == 'qagent':
             Player1.update_target_net()
